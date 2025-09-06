@@ -1,4 +1,3 @@
-# create_admin.py (versão segura)
 import os
 import django
 from django.contrib.auth import get_user_model
@@ -8,18 +7,21 @@ django.setup()
 
 User = get_user_model()
 
-# Usa variáveis de ambiente ou valores padrão
-admin_user = os.environ.get('ADMIN_USERNAME', 'admin')
-admin_pass = os.environ.get('ADMIN_PASSWORD', 'admin123')
-admin_email = os.environ.get('ADMIN_EMAIL', 'admin@seusite.com')
+# Versão SEGURA - Falha se não tiver variáveis
+try:
+    admin_user = os.environ['ADMIN_USERNAME']  # Falha se não existir
+    admin_pass = os.environ['ADMIN_PASSWORD']  # Falha se não existir
+    admin_email = os.environ['ADMIN_EMAIL']  # Falha se não existir
 
-if not User.objects.filter(is_superuser=True).exists():
-    try:
+    if not User.objects.filter(is_superuser=True).exists():
         user = User.objects.create_superuser(
             username=admin_user,
             email=admin_email,
             password=admin_pass
         )
-        print(f"✅ Superusuário criado: {admin_user} / {admin_pass}")
-    except Exception as e:
-        print(f"❌ Erro: {e}")
+        print(f"✅ Superusuário criado: {admin_user}")
+
+except KeyError as e:
+    print(f"❌ Variável de ambiente faltando: {e}")
+except Exception as e:
+    print(f"❌ Erro: {e}")
