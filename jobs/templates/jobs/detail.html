@@ -1,0 +1,73 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{{ job.title }} - Currículos IA{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+            <!-- Cabeçalho -->
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ job.title }}</h1>
+                    {% if job.company %}
+                    <p class="text-xl text-gray-600 dark:text-gray-300 mt-2">{{ job.company }}</p>
+                    {% endif %}
+                </div>
+                <div class="text-right">
+                    <a href="{% url 'create_analysis' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                        🤖 Analisar com IA
+                    </a>
+                </div>
+            </div>
+
+            <!-- URL da vaga -->
+            {% if job.url %}
+            <div class="mb-6">
+                <a href="{{ job.url }}" target="_blank" class="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                    Ver vaga original
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Descrição da vaga -->
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Descrição da Vaga</h2>
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+                    <div class="prose dark:prose-invert max-w-none">
+                        {{ job.description|linebreaks }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dados extraídos (se disponível) -->
+            {% if job.parsed_data %}
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Dados Extraídos</h2>
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
+                    <pre class="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{{ job.parsed_data|pprint }}</pre>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Ações -->
+            <div class="flex justify-between items-center">
+                <a href="{% url 'dashboard' %}" class="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
+                    ← Voltar para Dashboard
+                </a>
+                <div class="space-x-4">
+                    <a href="{% url 'create_analysis' %}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
+                        📊 Analisar Compatibilidade
+                    </a>
+                    <a href="{% url 'create_job' %}" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
+                        ➕ Nova Vaga
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Upload de Currículo - Currículos IA{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">Envie seu currículo</h1>
+            
+            <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {{ form.resume_file.label }}
+                    </label>
+                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md dark:border-gray-600">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <div class="flex text-sm text-gray-600 dark:text-gray-400">
+                                <label for="resume_file" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 dark:bg-gray-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                    <span>Selecione um arquivo</span>
+                                    <input id="resume_file" name="resume_file" type="file" class="sr-only" accept=".pdf,.doc,.docx">
+                                </label>
+                                <p class="pl-1">ou arraste e solte</p>
+                            </div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                PDF, DOC ou DOCX até 10MB
+                            </p>
+                        </div>
+                    </div>
+                    {% if form.resume_file.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.resume_file.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300">
+                        Processar Currículo
+                    </button>
+                </div>
+            </form>
+            
+            <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">Por que enviar seu currículo?</h3>
+                <ul class="text-blue-700 dark:text-blue-300 space-y-1 text-sm">
+                    <li>• Análise automática de compatibilidade com vagas</li>
+                    <li>• Sugestões de melhoria com IA</li>
+                    <li>• Export para PDF e DOCX otimizados</li>
+                    <li>• Acompanhamento da sua evolução profissional</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+    <!-- Adicione este script no final do template resumes/upload.html -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('resume_file');
+    const fileLabel = document.querySelector('label[for="resume_file"]');
+
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            const fileName = e.target.files[0].name;
+            // Atualiza o texto para mostrar o nome do arquivo
+            fileLabel.querySelector('span').textContent = 'Arquivo selecionado: ' + fileName;
+
+            // Adiciona visualmente que um arquivo foi selecionado
+            const dropZone = document.querySelector('.border-dashed');
+            dropZone.classList.add('border-green-500', 'border-2');
+            dropZone.classList.remove('border-gray-300', 'border-2');
+        }
+    });
+});
+</script>
+{% endblock %}

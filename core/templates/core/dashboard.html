@@ -1,0 +1,64 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Dashboard - Currículos IA{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">Dashboard</h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Estatísticas - CORRIGIDO: usando variáveis do contexto -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6">
+                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ resumes_count }}</div>
+                    <div class="text-sm font-medium text-blue-800 dark:text-blue-200">Currículos</div>
+                </div>
+
+                <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-6">
+                    <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ jobs_count }}</div>
+                    <div class="text-sm font-medium text-green-800 dark:text-green-200">Vagas Salvas</div>
+                </div>
+
+                <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-6">
+                    <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ analyses_count }}</div>
+                    <div class="text-sm font-medium text-purple-800 dark:text-purple-200">Análises</div>
+                </div>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <a href="{% url 'upload_resume' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-lg transition duration-300 text-center">
+                    📄 Upload de Currículo
+                </a>
+
+                <a href="{% url 'create_job' %}" class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition duration-300 text-center">
+                    💼 Adicionar Vaga
+                </a>
+
+                <a href="{% url 'create_analysis' %}" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-6 rounded-lg transition duration-300 text-center">
+                    🤖 Nova Análise
+                </a>
+
+                <a href="{% url 'profile' %}" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 px-6 rounded-lg transition duration-300 text-center">
+                    👤 Meu Perfil
+                </a>
+            </div>
+
+            <!-- Seção de Atividade Recente -->
+            <div class="mt-8">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Atividade Recente</h2>
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <p class="text-gray-600 dark:text-gray-300 text-center">
+                        {% if resumes_count == 0 and jobs_count == 0 and analyses_count == 0 %}
+                            Nenhuma atividade recente. Comece fazendo upload do seu primeiro currículo!
+                        {% else %}
+                            Você tem {{ resumes_count }} currículo(s), {{ jobs_count }} vaga(s) salva(s) e {{ analyses_count }} análise(s).
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

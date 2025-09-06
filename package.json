@@ -1,0 +1,15 @@
+{
+  "name": "curriculos-ia",
+  "version": "1.0.0",
+  "description": "Sistema de análise e otimização de currículos com IA",
+  "scripts": {
+    "dev": "python manage.py tailwind start",
+    "build": "python manage.py tailwind build"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.3.0",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.24",
+    "postcss-cli": "^10.1.0"
+  }
+}

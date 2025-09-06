@@ -1,0 +1,138 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Detalhes do Currículo - Currículos IA{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Detalhes do Currículo</h1>
+                <a href="{% url 'upload_resume' %}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300">
+                    Novo Upload
+                </a>
+            </div>
+
+            {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-md p-4 mb-2">
+                    <div class="text-green-800 dark:text-green-200 text-sm">
+                        {{ message }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Informações do Arquivo</h3>
+                    <div class="space-y-2">
+                        <p><span class="font-medium">Nome:</span> {{ resume.file_name }}</p>
+                        <p><span class="font-medium">Tamanho:</span> {{ resume.file_size|filesizeformat }}</p>
+                        <p><span class="font-medium">Tipo:</span> {{ resume.file_type }}</p>
+                        <p><span class="font-medium">Status:</span> 
+                            <span class="px-2 py-1 rounded-full text-xs font-medium 
+                                {% if resume.status == 'completed' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                                {% elif resume.status == 'processing' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                                {% elif resume.status == 'failed' %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
+                                {% else %}bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200{% endif %}">
+                                {{ resume.get_status_display }}
+                            </span>
+                        </p>
+                        <p><span class="font-medium">Data de Upload:</span> {{ resume.created_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Ações</h3>
+                    <div class="space-y-3">
+                        <a href="{{ resume.original_file.url }}" target="_blank" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300 block text-center">
+                            📄 Ver Arquivo Original
+                        </a>
+                        {% if resume.extracted_data %}
+                        <button class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition duration-300">
+                            📊 Ver Análise Completa
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if resume.extracted_data %}
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-6">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Dados Extraídos</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% if resume.extracted_data.name %}
+                    <div>
+                        <h4 class="font-medium text-gray-900 dark:text-white mb-2">Informações Pessoais</h4>
+                        <p><span class="font-medium">Nome:</span> {{ resume.extracted_data.name }}</p>
+                        {% if resume.extracted_data.email %}<p><span class="font-medium">Email:</span> {{ resume.extracted_data.email }}</p>{% endif %}
+                        {% if resume.extracted_data.phone %}<p><span class="font-medium">Telefone:</span> {{ resume.extracted_data.phone }}</p>{% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if resume.extracted_data.experience %}
+                    <div>
+                        <h4 class="font-medium text-gray-900 dark:text-white mb-2">Experiência</h4>
+                        <ul class="list-disc list-inside space-y-1">
+                            {% for exp in resume.extracted_data.experience %}
+                            <li>{{ exp }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    {% if resume.extracted_data.education %}
+                    <div>
+                        <h4 class="font-medium text-gray-900 dark:text-white mb-2">Educação</h4>
+                        <ul class="list-disc list-inside space-y-1">
+                            {% for edu in resume.extracted_data.education %}
+                            <li>{{ edu }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    {% if resume.extracted_data.skills %}
+                    <div>
+                        <h4 class="font-medium text-gray-900 dark:text-white mb-2">Habilidades</h4>
+                        <div class="flex flex-wrap gap-2">
+                            {% for skill in resume.extracted_data.skills %}
+                            <span class="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded-full text-sm">
+                                {{ skill }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-6 text-center">
+                <p class="text-yellow-800 dark:text-yellow-200">
+                    {% if resume.status == 'pending' %}
+                    ⏳ Seu currículo está na fila para processamento.
+                    {% elif resume.status == 'processing' %}
+                    🔄 Seu currículo está sendo processado.
+                    {% else %}
+                    ❌ Não foi possível extrair dados do currículo.
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+
+            <div class="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-gray-700">
+                <a href="{% url 'dashboard' %}" class="px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition duration-300">
+                    ← Voltar para Dashboard
+                </a>
+                <a href="{% url 'upload_resume' %}" class="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300">
+                    📤 Fazer Novo Upload
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

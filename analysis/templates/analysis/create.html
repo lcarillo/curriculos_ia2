@@ -1,0 +1,104 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Nova Análise - Currículos IA{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">
+                Nova Análise de Compatibilidade
+            </h1>
+
+            <form method="POST" class="space-y-6">
+                {% csrf_token %}
+                
+                <div class="space-y-4">
+                    <!-- Seleção de Currículo -->
+                    <div>
+                        <label for="{{ form.resume.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {{ form.resume.label }}
+                        </label>
+                        {{ form.resume }}
+                        {% if form.resume.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.resume.errors }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Seleção de Vaga -->
+                    <div>
+                        <label for="{{ form.job.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {{ form.job.label }}
+                        </label>
+                        {{ form.job }}
+                        {% if form.job.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.job.errors }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Mensagens -->
+                {% if messages %}
+                <div class="space-y-2">
+                    {% for message in messages %}
+                    <div class="p-4 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Botões -->
+                <div class="flex justify-between items-center pt-6">
+                    <a href="{% url 'dashboard' %}" class="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200">
+                        ← Voltar para Dashboard
+                    </a>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300">
+                        🚀 Iniciar Análise
+                    </button>
+                </div>
+            </form>
+
+            <!-- Informações adicionais -->
+            <div class="mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                    💡 Como funciona?
+                </h3>
+                <p class="text-blue-700 dark:text-blue-300 text-sm">
+                    A análise compara seu currículo com a vaga selecionada, identificando correspondências de habilidades,
+                    palavras-chave e experiência. Você receberá sugestões personalizadas para otimizar seu currículo.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background-color: white;
+    color: #374151;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dark .form-select {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #e5e7eb;
+}
+
+.dark .form-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+</style>
+{% endblock %}

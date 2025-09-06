@@ -1,0 +1,24 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Checkout - Currículos IA{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Redirecionando para o checkout...</h2>
+            <p class="text-gray-600 dark:text-gray-300 mb-6">Você será redirecionado para o Stripe para completar seu pagamento.</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Se o redirecionamento não funcionar, <a href="#" class="text-blue-600 dark:text-blue-400">clique aqui</a>.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simula redirecionamento (na prática, seria via redirect do servidor)
+    setTimeout(function() {
+        // Em produção, isso seria substituído pelo redirect real do Stripe
+        window.location.href = "{% url 'checkout_success' %}";
+    }, 2000);
+</script>
+{% endblock %}
