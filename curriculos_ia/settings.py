@@ -85,14 +85,14 @@ WSGI_APPLICATION = 'curriculos_ia.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+# Database
+# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', 'sqlite:///' + str(BASE_DIR / 'db.sqlite3')),
         conn_max_age=600,
         conn_health_checks=True,
     )
 }
-
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
