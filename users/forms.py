@@ -49,10 +49,15 @@ class CustomUserCreationForm(UserCreationForm):
 
         if commit:
             user.save()
-            # Garante que o perfil existe e atualiza o telefone
-            profile, created = Profile.objects.get_or_create(user=user)
-            profile.phone = self.cleaned_data['phone']
-            profile.save()
+            # Verifica se o perfil já existe antes de criar um novo
+            profile, created = Profile.objects.get_or_create(
+                user=user,
+                defaults={'phone': self.cleaned_data['phone']}
+            )
+            # Se o perfil já existia, atualiza o telefone
+            if not created:
+                profile.phone = self.cleaned_data['phone']
+                profile.save()
 
         return user
 
