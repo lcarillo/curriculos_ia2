@@ -108,7 +108,7 @@
             <!-- Botão de envio - inicialmente escondido -->
             <div id="final-submit-section" class="hidden">
                 <hr class="my-4 border-gray-200 dark:border-gray-600">
-                <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                <button type="submit" name="verify_complete" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
                     Finalizar Verificação
                 </button>
             </div>
@@ -160,6 +160,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const realPhoneCode = document.querySelector('input[name="real_phone_code"]').value;
     const realEmailCode = document.querySelector('input[name="real_email_code"]').value;
 
+    // Variáveis para controlar o estado de verificação
+    let phoneVerified = false;
+    let emailVerified = false;
+
     // Formatar número de telefone brasileiro
     function formatPhoneNumber(phone) {
         // Remover tudo que não é número
@@ -174,7 +178,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Aplicar formatação ao número exibido
     const phoneDisplay = document.getElementById('phone-number-display');
-    phoneDisplay.textContent = formatPhoneNumber(phoneDisplay.textContent);
+    if (phoneDisplay.textContent.trim() !== '') {
+        phoneDisplay.textContent = formatPhoneNumber(phoneDisplay.textContent);
+    }
 
     // Focar no campo de código do celular
     phoneCodeInput.focus();
@@ -200,6 +206,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
     }
 
+    // Função para verificar se pode enviar o formulário
+    function checkAndSubmitForm() {
+        if (phoneVerified && emailVerified) {
+            // Ambos verificados, mostrar botão de envio
+            finalSubmitSection.classList.remove('hidden');
+        }
+    }
+
     // Validação do telefone
     validatePhoneBtn.addEventListener('click', function() {
         if (phoneCodeInput.value.length !== 6) {
@@ -210,6 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Verificar se o código está correto
         if (phoneCodeInput.value === realPhoneCode) {
             // Código correto
+            phoneVerified = true;
             phoneStatusIcon.classList.remove('bg-gray-300', 'dark:bg-gray-600');
             phoneStatusIcon.classList.add('verified');
             phoneStatusIcon.innerHTML = '<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
@@ -228,6 +243,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Focar no próximo campo
             emailCodeInput.focus();
+
+            // Verificar se pode enviar formulário
+            checkAndSubmitForm();
         } else {
             // Código incorreto
             showError(phoneCodeInput);
@@ -262,6 +280,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Verificar se o código está correto
         if (emailCodeInput.value === realEmailCode) {
             // Código correto
+            emailVerified = true;
             emailStatusIcon.classList.remove('bg-gray-300', 'dark:bg-gray-600');
             emailStatusIcon.classList.add('verified');
             emailStatusIcon.innerHTML = '<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
@@ -269,12 +288,14 @@ document.addEventListener('DOMContentLoaded', function() {
             emailStatusText.classList.remove('text-gray-500');
             emailStatusText.classList.add('text-green-500');
 
-            // Habilitar envio final
-            finalSubmitSection.classList.remove('hidden');
+            // Desabilitar edição
             emailCodeInput.setAttribute('disabled', 'true');
             validateEmailBtn.setAttribute('disabled', 'true');
             validateEmailBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
             validateEmailBtn.classList.add('bg-gray-400', 'hover:bg-gray-500');
+
+            // Verificar se pode enviar formulário
+            checkAndSubmitForm();
         } else {
             // Código incorreto
             showError(emailCodeInput);
@@ -299,11 +320,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Validar formulário antes de enviar
-    form.addEventListener('submit', function(e) {
-        if (phoneCodeInput.value !== realPhoneCode || emailCodeInput.value !== realEmailCode) {
+    // Permitir Enter para validar
+    phoneCodeInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
             e.preventDefault();
-            alert('Por favor, verifique ambos os códigos antes de continuar.');
+            validatePhoneBtn.click();
+        }
+    });
+
+    emailCodeInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            validateEmailBtn.click();
         }
     });
 

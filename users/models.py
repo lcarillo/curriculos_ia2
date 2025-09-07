@@ -9,7 +9,7 @@ from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
 
-# Import do Twilio (adicione no topo)
+# Import do Twilio
 try:
     from twilio.rest import Client
 except ImportError:
@@ -78,7 +78,11 @@ class VerificationCode(models.Model):
         # DEBUG: Mostra no console em desenvolvimento
         if settings.DEBUG:
             print(f"📱 SMS DEBUG - Código: {self.phone_code}")
-            print(f"📱 SMS DEBUG - Para: {self.user.profile.phone if hasattr(self.user, 'profile') else 'NONE'}")
+            # Verifica se tem perfil e telefone
+            if hasattr(self.user, 'profile') and self.user.profile.phone:
+                print(f"📱 SMS DEBUG - Para: {self.user.profile.phone}")
+            else:
+                print("❌ SMS DEBUG - Para: NONE (telefone não salvo no perfil)")
             return True
 
         # Verifica se tem Twilio configurado
@@ -86,9 +90,9 @@ class VerificationCode(models.Model):
             print("❌ Twilio não configurado corretamente")
             return False
 
-        # Verifica se tem telefone
+        # Verifica se tem telefone no perfil
         if not hasattr(self.user, 'profile') or not self.user.profile.phone:
-            print("❌ Número de telefone não encontrado")
+            print("❌ Número de telefone não encontrado no perfil")
             return False
 
         # Tenta enviar via Twilio
@@ -127,6 +131,7 @@ class VerificationCode(models.Model):
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
+        print(f"✅ Perfil criado para {instance.username}")
 
 
 @receiver(post_save, sender=User)
@@ -135,3 +140,4 @@ def save_user_profile(sender, instance, **kwargs):
         instance.profile.save()
     else:
         Profile.objects.create(user=instance)
+        print(f"✅ Perfil criado posteriormente para {instance.username}")
