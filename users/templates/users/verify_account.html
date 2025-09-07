@@ -1,0 +1,331 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Verificar Conta - Currículos IA{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-6">
+        <!-- Cabeçalho -->
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900">
+                <svg class="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+            </div>
+            <h2 class="mt-6 text-3xl font-bold text-gray-900 dark:text-white">
+                Verificação em Duas Etapas
+            </h2>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Digite os códigos que enviamos para seu celular e e-mail
+            </p>
+        </div>
+
+        <!-- Indicadores de Progresso -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center">
+                    <div id="phone-status-icon" class="flex-shrink-0 h-6 w-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                        <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Verificação por SMS</span>
+                </div>
+                <span id="phone-status-text" class="text-xs text-gray-500 dark:text-gray-400">Pendente</span>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div id="email-status-icon" class="flex-shrink-0 h-6 w-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                        <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                    </div>
+                    <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Verificação por E-mail</span>
+                </div>
+                <span id="email-status-text" class="text-xs text-gray-500 dark:text-gray-400">Pendente</span>
+            </div>
+        </div>
+
+        <!-- Formulário de Verificação -->
+        <form class="mt-6 space-y-4 bg-white dark:bg-gray-800 shadow-md rounded-lg p-6" method="POST" id="verification-form">
+            {% csrf_token %}
+
+            <!-- Campos ocultos para códigos reais -->
+            <input type="hidden" name="real_phone_code" value="{{ real_phone_code }}">
+            <input type="hidden" name="real_email_code" value="{{ real_email_code }}">
+
+            {% if messages %}
+                {% for message in messages %}
+                <div class="{% if message.tags == 'error' %}bg-red-100 border border-red-400 text-red-700{% else %}bg-green-100 border border-green-400 text-green-700{% endif %} px-4 py-3 rounded relative" role="alert">
+                    <span class="block sm:inline">{{ message }}</span>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Campo Celular -->
+            <div id="phone-verification-section">
+                <div class="flex items-center justify-between mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Código enviado por SMS
+                    </label>
+                    <span class="text-xs text-blue-500" id="phone-number-display">{{ phone }}</span>
+                </div>
+
+                <div class="flex space-x-2">
+                    <input name="phone_code" type="text" maxlength="6" required
+                           class="flex-1 text-center appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-md placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm font-mono text-lg"
+                           placeholder="000000" id="phone-code">
+                    <button type="button" id="validate-phone" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Verificar
+                    </button>
+                </div>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Digite o código de 6 dígitos enviado para seu celular</p>
+            </div>
+
+            <!-- Campo Email - inicialmente escondido -->
+            <div id="email-verification-section" class="hidden">
+                <hr class="my-4 border-gray-200 dark:border-gray-600">
+
+                <div class="flex items-center justify-between mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Código enviado por E-mail
+                    </label>
+                    <span class="text-xs text-blue-500">{{ email }}</span>
+                </div>
+
+                <div class="flex space-x-2">
+                    <input name="email_code" type="text" maxlength="6" required
+                           class="flex-1 text-center appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-md placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm font-mono text-lg"
+                           placeholder="000000" id="email-code" disabled>
+                    <button type="button" id="validate-email" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" disabled>
+                        Verificar
+                    </button>
+                </div>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Digite o código de 6 dígitos enviado para seu e-mail</p>
+            </div>
+
+            <!-- Botão de envio - inicialmente escondido -->
+            <div id="final-submit-section" class="hidden">
+                <hr class="my-4 border-gray-200 dark:border-gray-600">
+                <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                    Finalizar Verificação
+                </button>
+            </div>
+        </form>
+
+        <!-- Link para reenviar códigos -->
+        <div class="text-center">
+            <a href="{% url 'resend_verification' %}" class="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
+                Não recebeu os códigos? Reenviar
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .verified {
+        background-color: #10B981 !important; /* Verde */
+    }
+
+    .error {
+        background-color: #EF4444 !important; /* Vermelho */
+    }
+
+    .shake {
+        animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const phoneCodeInput = document.getElementById('phone-code');
+    const emailCodeInput = document.getElementById('email-code');
+    const validatePhoneBtn = document.getElementById('validate-phone');
+    const validateEmailBtn = document.getElementById('validate-email');
+    const phoneSection = document.getElementById('phone-verification-section');
+    const emailSection = document.getElementById('email-verification-section');
+    const finalSubmitSection = document.getElementById('final-submit-section');
+    const phoneStatusIcon = document.getElementById('phone-status-icon');
+    const phoneStatusText = document.getElementById('phone-status-text');
+    const emailStatusIcon = document.getElementById('email-status-icon');
+    const emailStatusText = document.getElementById('email-status-text');
+    const form = document.getElementById('verification-form');
+    const realPhoneCode = document.querySelector('input[name="real_phone_code"]').value;
+    const realEmailCode = document.querySelector('input[name="real_email_code"]').value;
+
+    // Formatar número de telefone brasileiro
+    function formatPhoneNumber(phone) {
+        // Remover tudo que não é número
+        const cleaned = phone.replace(/\D/g, '');
+
+        // Aplicar máscara: +55 (11) 99999-9999
+        if (cleaned.length === 11) {
+            return `+55 (${cleaned.substring(0, 2)}) ${cleaned.substring(2, 7)}-${cleaned.substring(7)}`;
+        }
+        return phone; // Retornar original se não for um número brasileiro
+    }
+
+    // Aplicar formatação ao número exibido
+    const phoneDisplay = document.getElementById('phone-number-display');
+    phoneDisplay.textContent = formatPhoneNumber(phoneDisplay.textContent);
+
+    // Focar no campo de código do celular
+    phoneCodeInput.focus();
+
+    // Auto-avançar entre dígitos (para melhor UX)
+    phoneCodeInput.addEventListener('input', function() {
+        if (this.value.length === 6) {
+            validatePhoneBtn.click();
+        }
+    });
+
+    emailCodeInput.addEventListener('input', function() {
+        if (this.value.length === 6) {
+            validateEmailBtn.click();
+        }
+    });
+
+    // Função para mostrar erro
+    function showError(input) {
+        input.classList.add('border-red-500', 'shake');
+        setTimeout(() => {
+            input.classList.remove('border-red-500', 'shake');
+        }, 1000);
+    }
+
+    // Validação do telefone
+    validatePhoneBtn.addEventListener('click', function() {
+        if (phoneCodeInput.value.length !== 6) {
+            showError(phoneCodeInput);
+            return;
+        }
+
+        // Verificar se o código está correto
+        if (phoneCodeInput.value === realPhoneCode) {
+            // Código correto
+            phoneStatusIcon.classList.remove('bg-gray-300', 'dark:bg-gray-600');
+            phoneStatusIcon.classList.add('verified');
+            phoneStatusIcon.innerHTML = '<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
+            phoneStatusText.textContent = 'Verificado';
+            phoneStatusText.classList.remove('text-gray-500');
+            phoneStatusText.classList.add('text-green-500');
+
+            // Habilitar próxima etapa
+            emailSection.classList.remove('hidden');
+            emailCodeInput.removeAttribute('disabled');
+            validateEmailBtn.removeAttribute('disabled');
+            phoneCodeInput.setAttribute('disabled', 'true');
+            validatePhoneBtn.setAttribute('disabled', 'true');
+            validatePhoneBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            validatePhoneBtn.classList.add('bg-gray-400', 'hover:bg-gray-500');
+
+            // Focar no próximo campo
+            emailCodeInput.focus();
+        } else {
+            // Código incorreto
+            showError(phoneCodeInput);
+            phoneStatusIcon.classList.remove('bg-gray-300', 'dark:bg-gray-600');
+            phoneStatusIcon.classList.add('error');
+            phoneStatusIcon.innerHTML = '<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
+            phoneStatusText.textContent = 'Código inválido';
+            phoneStatusText.classList.remove('text-gray-500');
+            phoneStatusText.classList.add('text-red-500');
+
+            // Limpar após 2 segundos
+            setTimeout(() => {
+                phoneStatusIcon.classList.remove('error');
+                phoneStatusIcon.classList.add('bg-gray-300', 'dark:bg-gray-600');
+                phoneStatusIcon.innerHTML = '<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>';
+                phoneStatusText.textContent = 'Pendente';
+                phoneStatusText.classList.remove('text-red-500');
+                phoneStatusText.classList.add('text-gray-500');
+                phoneCodeInput.value = '';
+                phoneCodeInput.focus();
+            }, 2000);
+        }
+    });
+
+    // Validação do email
+    validateEmailBtn.addEventListener('click', function() {
+        if (emailCodeInput.value.length !== 6) {
+            showError(emailCodeInput);
+            return;
+        }
+
+        // Verificar se o código está correto
+        if (emailCodeInput.value === realEmailCode) {
+            // Código correto
+            emailStatusIcon.classList.remove('bg-gray-300', 'dark:bg-gray-600');
+            emailStatusIcon.classList.add('verified');
+            emailStatusIcon.innerHTML = '<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
+            emailStatusText.textContent = 'Verificado';
+            emailStatusText.classList.remove('text-gray-500');
+            emailStatusText.classList.add('text-green-500');
+
+            // Habilitar envio final
+            finalSubmitSection.classList.remove('hidden');
+            emailCodeInput.setAttribute('disabled', 'true');
+            validateEmailBtn.setAttribute('disabled', 'true');
+            validateEmailBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            validateEmailBtn.classList.add('bg-gray-400', 'hover:bg-gray-500');
+        } else {
+            // Código incorreto
+            showError(emailCodeInput);
+            emailStatusIcon.classList.remove('bg-gray-300', 'dark:bg-gray-600');
+            emailStatusIcon.classList.add('error');
+            emailStatusIcon.innerHTML = '<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
+            emailStatusText.textContent = 'Código inválido';
+            emailStatusText.classList.remove('text-gray-500');
+            emailStatusText.classList.add('text-red-500');
+
+            // Limpar após 2 segundos
+            setTimeout(() => {
+                emailStatusIcon.classList.remove('error');
+                emailStatusIcon.classList.add('bg-gray-300', 'dark:bg-gray-600');
+                emailStatusIcon.innerHTML = '<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>';
+                emailStatusText.textContent = 'Pendente';
+                emailStatusText.classList.remove('text-red-500');
+                emailStatusText.classList.add('text-gray-500');
+                emailCodeInput.value = '';
+                emailCodeInput.focus();
+            }, 2000);
+        }
+    });
+
+    // Validar formulário antes de enviar
+    form.addEventListener('submit', function(e) {
+        if (phoneCodeInput.value !== realPhoneCode || emailCodeInput.value !== realEmailCode) {
+            e.preventDefault();
+            alert('Por favor, verifique ambos os códigos antes de continuar.');
+        }
+    });
+
+    // Permitir apenas números nos campos de código
+    const codeInputs = document.querySelectorAll('input[name="phone_code"], input[name="email_code"]');
+    codeInputs.forEach(input => {
+        input.addEventListener('keydown', function(e) {
+            // Permitir: backspace, delete, tab, escape, enter, setas
+            if ([46, 8, 9, 27, 13, 110, 190].includes(e.keyCode) ||
+                // Permitir: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                (e.keyCode === 65 && e.ctrlKey === true) ||
+                (e.keyCode === 67 && e.ctrlKey === true) ||
+                (e.keyCode === 86 && e.ctrlKey === true) ||
+                (e.keyCode === 88 && e.ctrlKey === true) ||
+                // Permitir: números do teclado principal e numérico
+                (e.keyCode >= 48 && e.keyCode <= 57) ||
+                (e.keyCode >= 96 && e.keyCode <= 105)) {
+                return;
+            }
+            e.preventDefault();
+        });
+    });
+});
+</script>
+{% endblock %}

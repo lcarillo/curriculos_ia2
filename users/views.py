@@ -1,132 +1,126 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate, logout
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import login, logout
 from django.contrib import messages
-from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, \
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.views import (
+    PasswordResetView,
+    PasswordResetDoneView,
+    PasswordResetConfirmView,
     PasswordResetCompleteView
+)
 from django.urls import reverse_lazy
-from django.views.decorators.http import require_POST
-from django.views.decorators.csrf import csrf_protect
+from django.utils import timezone
+from datetime import timedelta
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 
-# Importe dos apps corretos onde os modelos já existem
-from resumes.models import Resume
-from jobs.models import JobPosting
-from analysis.models import Analysis  # Note: é Analysis, não Analyses
-
-from .forms import CustomUserCreationForm, ProfileForm, UserUpdateForm
+from .forms import CustomUserCreationForm
+from .models import VerificationCode, Profile
 
 
-def anonymous_required(function=None, redirect_url='dashboard'):
-    """
-    Decorator para views que redireciona usuários logados para a página inicial
-    """
-    actual_decorator = user_passes_test(
-        lambda u: u.is_anonymous,
-        login_url=redirect_url
-    )
-    if function:
-        return actual_decorator(function)
-    return actual_decorator
-
-
-@anonymous_required
 def signup(request):
-    """View para cadastro de novos usuários"""
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
-            messages.success(request, 'Cadastro realizado com sucesso!')
-            return redirect('dashboard')
+
+            # Cria códigos de verificação
+            verification = VerificationCode.objects.create(user=user)
+            verification.send_email_verification()
+            verification.send_phone_verification()
+
+            return redirect('verify_account', user_id=user.id)
     else:
         form = CustomUserCreationForm()
+
     return render(request, 'users/signup.html', {'form': form})
 
+def verify_account(request, user_id):
+    try:
+        user = User.objects.get(id=user_id, is_active=False)
+    except User.DoesNotExist:
+        messages.error(request, "Usuário não encontrado ou já verificado.")
+        return redirect('signup')
 
-@anonymous_required
+    # Verifica se pode reenviar códigos (implementação simplificada)
+    verification = VerificationCode.objects.filter(user=user).order_by('-created_at').first()
+    can_resend = True
+    if verification:
+        # Permitir reenvio após 1 minuto
+        can_resend = timezone.now() > verification.created_at + timedelta(minutes=1)
+
+    if request.method == 'POST':
+        # Verifica se é um pedido de reenvio
+        if 'resend' in request.POST:
+            if can_resend:
+                verification = VerificationCode.objects.create(user=user)
+                verification.send_email_verification()
+                verification.send_phone_verification()
+                messages.success(request, "Códigos reenviados com sucesso!")
+            else:
+                messages.error(request, "Aguarde 1 minuto para reenviar os códigos.")
+            return redirect('verify_account', user_id=user.id)
+
+        # Verificação normal dos códigos
+        phone_code = request.POST.get('phone_code')
+        email_code = request.POST.get('email_code')
+
+        if verification and verification.verify_phone(phone_code) and verification.verify_email(email_code):
+            # Ativa o usuário
+            user.is_active = True
+            user.save()
+            messages.success(request, "Conta verificada com sucesso! Você já pode fazer login.")
+            return redirect('login')
+        else:
+            messages.error(request, "Códigos inválidos ou expirados.")
+
+    return render(request, 'users/verify_account.html', {
+        'user': user,
+        'email': user.email,
+        'phone': user.profile.phone if hasattr(user, 'profile') else '',
+        'can_resend': can_resend
+    })
+
+
+@login_required
+def resend_verification(request):
+    # Implementação simplificada - sempre permite reenvio
+    verification = VerificationCode.objects.create(user=request.user)
+    verification.send_email_verification()
+    verification.send_phone_verification()
+
+    messages.success(request, "Códigos reenviados com sucesso!")
+    return redirect('verify_account', user_id=request.user.id)
+
+
 def user_login(request):
-    """View para login de usuários"""
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(username=username, password=password)
-            if user is not None:
-                login(request, user)
-                #messages.success(request, f'Bem-vindo de volta, {username}!')
-                return redirect('dashboard')
+            user = form.get_user()
+            login(request, user)
+            messages.success(request, f"Bem-vindo, {user.first_name}!")
+            return redirect('profile')
         else:
-            messages.error(request, 'Usuário ou senha inválidos.')
+            messages.error(request, "Usuário ou senha incorretos.")
     else:
         form = AuthenticationForm()
+
     return render(request, 'users/login.html', {'form': form})
 
 
-@require_POST
-@csrf_protect
 def user_logout(request):
-    """View para logout de usuários (requer POST e CSRF)"""
     logout(request)
-    #messages.success(request, 'Você saiu da sua conta com sucesso!')
-    return redirect('home')
+    messages.success(request, "Você foi desconectado com sucesso.")
+    return redirect('login')
 
 
 @login_required
 def profile(request):
-    """View para edição do perfil do usuário"""
-    if request.method == 'POST':
-        user_form = UserUpdateForm(request.POST, instance=request.user)
-        profile_form = ProfileForm(request.POST, instance=request.user.profile)
-
-        if user_form.is_valid() and profile_form.is_valid():
-            user_form.save()
-            profile_form.save()
-            messages.success(request, 'Perfil atualizado com sucesso!')
-            return redirect('profile')
-    else:
-        user_form = UserUpdateForm(instance=request.user)
-        profile_form = ProfileForm(instance=request.user.profile)
-
-    return render(request, 'users/profile.html', {
-        'user_form': user_form,
-        'profile_form': profile_form
-    })
+    return render(request, 'users/profile.html', {'user': request.user})
 
 
-def home(request):
-    """Página inicial do site"""
-    return render(request, 'core/home.html')
-
-
-def pricing(request):
-    """Página de preços"""
-    return render(request, 'core/pricing.html')
-
-
-def terms(request):
-    """Página de termos de uso"""
-    return render(request, 'core/terms.html')
-
-
-@login_required
-def dashboard(request):
-    """Dashboard do usuário"""
-    resumes_count = Resume.objects.filter(user=request.user).count()
-    jobs_count = JobPosting.objects.filter(user=request.user).count()
-    analyses_count = Analysis.objects.filter(user=request.user).count()
-
-    context = {
-        'resumes_count': resumes_count,
-        'jobs_count': jobs_count,
-        'analyses_count': analyses_count,
-    }
-    return render(request, 'core/dashboard.html', context)
-
-
-# Views para reset de senha
+# Views para redefinição de senha personalizadas
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'users/password_reset.html'
     email_template_name = 'users/password_reset_email.html'
