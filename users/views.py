@@ -24,62 +24,30 @@ def signup(request):
         if form.is_valid():
             user = form.save()
 
-            # Cria códigos de verificação
-            verification = VerificationCode.objects.create(user=user)
-            verification.send_email_verification()
-            verification.send_phone_verification()
+            # Recarrega o usuário para garantir que o perfil está atualizado
+            user.refresh_from_db()
 
-            return redirect('verify_account', user_id=user.id)
+            # Verifica se o perfil foi criado e tem telefone
+            if hasattr(user, 'profile') and user.profile.phone:
+                verification = VerificationCode.objects.create(user=user)
+                verification.send_email_verification()
+                verification.send_phone_verification()
+                return redirect('verify_account', user_id=user.id)
+            else:
+                # Debug para identificar o problema
+                print(f"❌ PROBLEMA NO PERFIL:")
+                print(f"   User: {user.username}")
+                print(f"   Tem profile: {hasattr(user, 'profile')}")
+                if hasattr(user, 'profile'):
+                    print(f"   Phone no profile: {user.profile.phone}")
+                print(f"   Phone no form: {form.cleaned_data['phone']}")
+
+                messages.error(request, "Erro ao criar perfil. Tente novamente.")
+                return redirect('signup')
     else:
         form = CustomUserCreationForm()
 
     return render(request, 'users/signup.html', {'form': form})
-
-def verify_account(request, user_id):
-    try:
-        user = User.objects.get(id=user_id, is_active=False)
-    except User.DoesNotExist:
-        messages.error(request, "Usuário não encontrado ou já verificado.")
-        return redirect('signup')
-
-    # Verifica se pode reenviar códigos (implementação simplificada)
-    verification = VerificationCode.objects.filter(user=user).order_by('-created_at').first()
-    can_resend = True
-    if verification:
-        # Permitir reenvio após 1 minuto
-        can_resend = timezone.now() > verification.created_at + timedelta(minutes=1)
-
-    if request.method == 'POST':
-        # Verifica se é um pedido de reenvio
-        if 'resend' in request.POST:
-            if can_resend:
-                verification = VerificationCode.objects.create(user=user)
-                verification.send_email_verification()
-                verification.send_phone_verification()
-                messages.success(request, "Códigos reenviados com sucesso!")
-            else:
-                messages.error(request, "Aguarde 1 minuto para reenviar os códigos.")
-            return redirect('verify_account', user_id=user.id)
-
-        # Verificação normal dos códigos
-        phone_code = request.POST.get('phone_code')
-        email_code = request.POST.get('email_code')
-
-        if verification and verification.verify_phone(phone_code) and verification.verify_email(email_code):
-            # Ativa o usuário
-            user.is_active = True
-            user.save()
-            messages.success(request, "Conta verificada com sucesso! Você já pode fazer login.")
-            return redirect('login')
-        else:
-            messages.error(request, "Códigos inválidos ou expirados.")
-
-    return render(request, 'users/verify_account.html', {
-        'user': user,
-        'email': user.email,
-        'phone': user.profile.phone if hasattr(user, 'profile') else '',
-        'can_resend': can_resend
-    })
 
 
 @login_required

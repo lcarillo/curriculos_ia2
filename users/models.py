@@ -75,6 +75,15 @@ class VerificationCode(models.Model):
         self.phone_code = self.generate_code()
         self.save()
 
+        # DEBUG: Informações detalhadas
+        print(f"🔍 DEBUG SMS:")
+        print(f"   User: {self.user.username}")
+        print(f"   Tem profile: {hasattr(self.user, 'profile')}")
+        if hasattr(self.user, 'profile'):
+            print(f"   Phone no profile: '{self.user.profile.phone}'")
+        else:
+            print(f"   ❌ User não tem profile!")
+
         # DEBUG: Mostra no console em desenvolvimento
         if settings.DEBUG:
             print(f"📱 SMS DEBUG - Código: {self.phone_code}")
