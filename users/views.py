@@ -14,6 +14,8 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_protect
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import User
 
 from .forms import CustomUserCreationForm
 from .models import VerificationSession
@@ -125,6 +127,7 @@ def verify_account(request):
         'attempts_left': verification_session.max_attempts - verification_session.verification_attempts
     })
 
+
 @require_POST
 def verify_phone_code_ajax(request):
     session_key = request.session.get('verification_session_key')
@@ -231,10 +234,33 @@ def profile(request):
 
 
 # Views personalizadas de redefinição de senha
-class CustomPasswordResetView(PasswordResetView):
+class CustomPasswordResetView(LoginRequiredMixin, PasswordResetView):
     template_name = 'users/password_reset.html'
     email_template_name = 'users/password_reset_email.html'
     success_url = reverse_lazy('password_reset_done')
+
+    def get_initial(self):
+        """Preenche o email com o email do usuário logado"""
+        initial = super().get_initial()
+        if self.request.user.is_authenticated:
+            initial['email'] = self.request.user.email
+        return initial
+
+    def form_valid(self, form):
+        """Verifica se o email pertence ao usuário logado"""
+        email = form.cleaned_data['email']
+
+        # Se o usuário está logado e o email não é o dele
+        if self.request.user.is_authenticated and self.request.user.email != email:
+            form.add_error('email', 'Este email não pertence à sua conta.')
+            return self.form_invalid(form)
+
+        # Verifica se o email existe no sistema
+        if not User.objects.filter(email=email).exists():
+            form.add_error('email', 'Este email não está cadastrado em nossa base.')
+            return self.form_invalid(form)
+
+        return super().form_valid(form)
 
 
 class CustomPasswordResetDoneView(PasswordResetDoneView):
