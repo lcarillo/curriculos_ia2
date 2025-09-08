@@ -1,5 +1,3 @@
-# ===== Arquivo: C:\Users\lcarillo\Desktop\curriculos_ia\users\views.py =====
-
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib import messages
@@ -12,17 +10,15 @@ from django.contrib.auth.views import (
 )
 from django.urls import reverse_lazy
 from django.utils import timezone
-from datetime import timedelta
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_protect
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 from .forms import CustomUserCreationForm
-from .models import VerificationSession, Profile
+from .models import VerificationSession
 import secrets
 
-
-# ===== Arquivo: C:\Users\lcarillo\Desktop\curriculos_ia\users\views.py =====
 
 def signup(request):
     if request.method == 'POST':
@@ -54,7 +50,6 @@ def signup(request):
 
     return render(request, 'users/signup.html', {'form': form})
 
-# ===== Arquivo: C:\Users\lcarillo\Desktop\curriculos_ia\users\views.py =====
 
 @csrf_protect
 def verify_account(request):
@@ -85,30 +80,27 @@ def verify_account(request):
             messages.success(request, "Códigos reenviados com sucesso!")
             return redirect('verify_account')
 
-        # Processar verificação dos códigos
-        phone_code = request.POST.get('phone_code', '').strip()
-        email_code = request.POST.get('email_code', '').strip()
+        # Usar os códigos dos campos hidden (que não são desabilitados)
+        phone_code = request.POST.get('verified_phone_code', '').strip()
+        email_code = request.POST.get('verified_email_code', '').strip()
 
-        # Debug: verificar o que está chegando no POST
-        print(f"Phone code received: {phone_code}")
-        print(f"Email code received: {email_code}")
-        print(f"Expected phone code: {verification_session.phone_code}")
-        print(f"Expected email code: {verification_session.email_code}")
+        # Se os campos hidden estiverem vazios, tentar pegar dos campos normais
+        if not phone_code:
+            phone_code = request.POST.get('phone_code', '').strip()
+        if not email_code:
+            email_code = request.POST.get('email_code', '').strip()
 
-        # Verifica se os códigos foram fornecidos
         if not phone_code or not email_code:
             messages.error(request, "Por favor, preencha ambos os códigos.")
         else:
             # Verificar códigos
-            phone_valid = verification_session.verify_phone(phone_code)
-            email_valid = verification_session.verify_email(email_code)
-
-            print(f"Phone valid: {phone_valid}, Email valid: {email_valid}")
+            phone_valid = verification_session.verify_phone_code(phone_code)
+            email_valid = verification_session.verify_email_code(email_code)
 
             if phone_valid and email_valid:
                 # Cria usuário e faz login
                 try:
-                    user = verification_session.create_user()
+                    user = verification_session.create_user_after_verification()
                     login(request, user)
 
                     # Limpa sessão
@@ -125,7 +117,6 @@ def verify_account(request):
                 verification_session.save()
                 messages.error(request, "Códigos inválidos. Tente novamente.")
 
-    # Formata telefone para exibição
     phone_display = f"+55 ({verification_session.phone[:2]}) {verification_session.phone[2:7]}-{verification_session.phone[7:]}"
 
     return render(request, 'users/verify_account.html', {
@@ -133,6 +124,58 @@ def verify_account(request):
         'phone': phone_display,
         'attempts_left': verification_session.max_attempts - verification_session.verification_attempts
     })
+
+@require_POST
+def verify_phone_code_ajax(request):
+    session_key = request.session.get('verification_session_key')
+    if not session_key:
+        return JsonResponse({'valid': False, 'error': 'Sessão não encontrada'})
+
+    try:
+        verification_session = VerificationSession.objects.get(session_key=session_key)
+    except VerificationSession.DoesNotExist:
+        return JsonResponse({'valid': False, 'error': 'Sessão expirada'})
+
+    if not verification_session.is_valid():
+        return JsonResponse({'valid': False, 'error': 'Sessão expirada'})
+
+    phone_code = request.POST.get('phone_code', '').strip()
+    if not phone_code:
+        return JsonResponse({'valid': False, 'error': 'Código não fornecido'})
+
+    if verification_session.verify_phone_code(phone_code):
+        return JsonResponse({'valid': True})
+    else:
+        verification_session.verification_attempts += 1
+        verification_session.save()
+        return JsonResponse({'valid': False, 'error': 'Código inválido'})
+
+
+@require_POST
+def verify_email_code_ajax(request):
+    session_key = request.session.get('verification_session_key')
+    if not session_key:
+        return JsonResponse({'valid': False, 'error': 'Sessão não encontrada'})
+
+    try:
+        verification_session = VerificationSession.objects.get(session_key=session_key)
+    except VerificationSession.DoesNotExist:
+        return JsonResponse({'valid': False, 'error': 'Sessão expirada'})
+
+    if not verification_session.is_valid():
+        return JsonResponse({'valid': False, 'error': 'Sessão expirada'})
+
+    email_code = request.POST.get('email_code', '').strip()
+    if not email_code:
+        return JsonResponse({'valid': False, 'error': 'Código não fornecido'})
+
+    if verification_session.verify_email_code(email_code):
+        return JsonResponse({'valid': True})
+    else:
+        verification_session.verification_attempts += 1
+        verification_session.save()
+        return JsonResponse({'valid': False, 'error': 'Código inválido'})
+
 
 def resend_verification(request):
     session_key = request.session.get('verification_session_key')
@@ -157,7 +200,7 @@ def resend_verification(request):
     verification_session.save()
 
     messages.success(request, "Códigos reenviados com sucesso!")
-    return redirect('verify_account')  # Agora sem parâmetros
+    return redirect('verify_account')
 
 
 def user_login(request):
@@ -167,7 +210,7 @@ def user_login(request):
             user = form.get_user()
             login(request, user)
             messages.success(request, f"Bem-vindo, {user.first_name}!")
-            return redirect('profile')
+            return redirect('dashboard')
         else:
             messages.error(request, "Usuário ou senha incorretos.")
     else:
