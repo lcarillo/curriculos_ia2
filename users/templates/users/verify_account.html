@@ -1,3 +1,5 @@
+<!-- ===== Arquivo: C:\Users\lcarillo\Desktop\curriculos_ia\users\templates\users\verify_account.html ===== -->
+
 {% extends 'core/base.html' %}
 
 {% block title %}Verificar Conta - Currículos IA{% endblock %}
@@ -18,42 +20,16 @@
             <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
                 Digite os códigos que enviamos para seu celular e e-mail
             </p>
-        </div>
-
-        <!-- Indicadores de Progresso -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center">
-                    <div id="phone-status-icon" class="flex-shrink-0 h-6 w-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                        <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                    </div>
-                    <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Verificação por SMS</span>
-                </div>
-                <span id="phone-status-text" class="text-xs text-gray-500 dark:text-gray-400">Pendente</span>
-            </div>
-
-            <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                    <div id="email-status-icon" class="flex-shrink-0 h-6 w-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                        <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                    </div>
-                    <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">Verificação por E-mail</span>
-                </div>
-                <span id="email-status-text" class="text-xs text-gray-500 dark:text-gray-400">Pendente</span>
-            </div>
+            {% if attempts_left <= 3 %}
+            <p class="mt-2 text-sm text-yellow-600 dark:text-yellow-400">
+                ⚠️ Restam {{ attempts_left }} tentativa{{ attempts_left|pluralize }}
+            </p>
+            {% endif %}
         </div>
 
         <!-- Formulário de Verificação -->
         <form class="mt-6 space-y-4 bg-white dark:bg-gray-800 shadow-md rounded-lg p-6" method="POST" id="verification-form">
             {% csrf_token %}
-
-            <!-- Campos ocultos para códigos reais -->
-            <input type="hidden" name="real_phone_code" value="{{ real_phone_code }}">
-            <input type="hidden" name="real_email_code" value="{{ real_email_code }}">
 
             {% if messages %}
                 {% for message in messages %}
@@ -97,8 +73,8 @@
                 <div class="flex space-x-2">
                     <input name="email_code" type="text" maxlength="6" required
                            class="flex-1 text-center appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-md placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm font-mono text-lg"
-                           placeholder="000000" id="email-code" disabled>
-                    <button type="button" id="validate-email" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" disabled>
+                           placeholder="000000" id="email-code">
+                    <button type="button" id="validate-email" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         Verificar
                     </button>
                 </div>
@@ -114,11 +90,19 @@
             </div>
         </form>
 
-        <!-- Link para reenviar códigos -->
-        <div class="text-center">
-            <a href="{% url 'resend_verification' %}" class="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-                Não recebeu os códigos? Reenviar
-            </a>
+        <!-- Ações adicionais -->
+        <div class="text-center space-y-2">
+            <form method="post" class="inline">
+                {% csrf_token %}
+                <button type="submit" name="resend" class="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
+                    Não recebeu os códigos? Reenviar
+                </button>
+            </form>
+            <div>
+                <a href="{% url 'signup' %}" class="text-sm text-gray-600 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300">
+                    ← Voltar para cadastro
+                </a>
+            </div>
         </div>
     </div>
 </div>
@@ -152,35 +136,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const phoneSection = document.getElementById('phone-verification-section');
     const emailSection = document.getElementById('email-verification-section');
     const finalSubmitSection = document.getElementById('final-submit-section');
-    const phoneStatusIcon = document.getElementById('phone-status-icon');
-    const phoneStatusText = document.getElementById('phone-status-text');
-    const emailStatusIcon = document.getElementById('email-status-icon');
-    const emailStatusText = document.getElementById('email-status-text');
     const form = document.getElementById('verification-form');
-    const realPhoneCode = document.querySelector('input[name="real_phone_code"]').value;
-    const realEmailCode = document.querySelector('input[name="real_email_code"]').value;
 
     // Variáveis para controlar o estado de verificação
     let phoneVerified = false;
     let emailVerified = false;
-
-    // Formatar número de telefone brasileiro
-    function formatPhoneNumber(phone) {
-        // Remover tudo que não é número
-        const cleaned = phone.replace(/\D/g, '');
-
-        // Aplicar máscara: +55 (11) 99999-9999
-        if (cleaned.length === 11) {
-            return `+55 (${cleaned.substring(0, 2)}) ${cleaned.substring(2, 7)}-${cleaned.substring(7)}`;
-        }
-        return phone; // Retornar original se não for um número brasileiro
-    }
-
-    // Aplicar formatação ao número exibido
-    const phoneDisplay = document.getElementById('phone-number-display');
-    if (phoneDisplay.textContent.trim() !== '') {
-        phoneDisplay.textContent = formatPhoneNumber(phoneDisplay.textContent);
-    }
 
     // Focar no campo de código do celular
     phoneCodeInput.focus();
@@ -211,6 +171,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (phoneVerified && emailVerified) {
             // Ambos verificados, mostrar botão de envio
             finalSubmitSection.classList.remove('hidden');
+
+            // Auto-enviar após 1 segundo
+            setTimeout(() => {
+                form.submit();
+            }, 1000);
         }
     }
 
@@ -221,53 +186,23 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Verificar se o código está correto
-        if (phoneCodeInput.value === realPhoneCode) {
-            // Código correto
-            phoneVerified = true;
-            phoneStatusIcon.classList.remove('bg-gray-300', 'dark:bg-gray-600');
-            phoneStatusIcon.classList.add('verified');
-            phoneStatusIcon.innerHTML = '<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
-            phoneStatusText.textContent = 'Verificado';
-            phoneStatusText.classList.remove('text-gray-500');
-            phoneStatusText.classList.add('text-green-500');
+        // Código válido (simulação - o servidor fará a validação real)
+        phoneVerified = true;
 
-            // Habilitar próxima etapa
-            emailSection.classList.remove('hidden');
-            emailCodeInput.removeAttribute('disabled');
-            validateEmailBtn.removeAttribute('disabled');
-            phoneCodeInput.setAttribute('disabled', 'true');
-            validatePhoneBtn.setAttribute('disabled', 'true');
-            validatePhoneBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-            validatePhoneBtn.classList.add('bg-gray-400', 'hover:bg-gray-500');
+        // Habilitar próxima etapa
+        emailSection.classList.remove('hidden');
+        emailCodeInput.removeAttribute('readonly');
+        validateEmailBtn.removeAttribute('disabled');
+        phoneCodeInput.setAttribute('readonly', 'true');  // Usar readonly em vez de disabled
+        validatePhoneBtn.setAttribute('disabled', 'true');
+        validatePhoneBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        validatePhoneBtn.classList.add('bg-gray-400', 'hover:bg-gray-500');
 
-            // Focar no próximo campo
-            emailCodeInput.focus();
+        // Focar no próximo campo
+        emailCodeInput.focus();
 
-            // Verificar se pode enviar formulário
-            checkAndSubmitForm();
-        } else {
-            // Código incorreto
-            showError(phoneCodeInput);
-            phoneStatusIcon.classList.remove('bg-gray-300', 'dark:bg-gray-600');
-            phoneStatusIcon.classList.add('error');
-            phoneStatusIcon.innerHTML = '<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
-            phoneStatusText.textContent = 'Código inválido';
-            phoneStatusText.classList.remove('text-gray-500');
-            phoneStatusText.classList.add('text-red-500');
-
-            // Limpar após 2 segundos
-            setTimeout(() => {
-                phoneStatusIcon.classList.remove('error');
-                phoneStatusIcon.classList.add('bg-gray-300', 'dark:bg-gray-600');
-                phoneStatusIcon.innerHTML = '<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>';
-                phoneStatusText.textContent = 'Pendente';
-                phoneStatusText.classList.remove('text-red-500');
-                phoneStatusText.classList.add('text-gray-500');
-                phoneCodeInput.value = '';
-                phoneCodeInput.focus();
-            }, 2000);
-        }
+        // Verificar se pode enviar formulário
+        checkAndSubmitForm();
     });
 
     // Validação do email
@@ -277,47 +212,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Verificar se o código está correto
-        if (emailCodeInput.value === realEmailCode) {
-            // Código correto
-            emailVerified = true;
-            emailStatusIcon.classList.remove('bg-gray-300', 'dark:bg-gray-600');
-            emailStatusIcon.classList.add('verified');
-            emailStatusIcon.innerHTML = '<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
-            emailStatusText.textContent = 'Verificado';
-            emailStatusText.classList.remove('text-gray-500');
-            emailStatusText.classList.add('text-green-500');
+        // Código válido (simulação - o servidor fará a validação real)
+        emailVerified = true;
 
-            // Desabilitar edição
-            emailCodeInput.setAttribute('disabled', 'true');
-            validateEmailBtn.setAttribute('disabled', 'true');
-            validateEmailBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-            validateEmailBtn.classList.add('bg-gray-400', 'hover:bg-gray-500');
+        // Desabilitar edição
+        emailCodeInput.setAttribute('readonly', 'true');  // Usar readonly em vez de disabled
+        validateEmailBtn.setAttribute('disabled', 'true');
+        validateEmailBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        validateEmailBtn.classList.add('bg-gray-400', 'hover:bg-gray-500');
 
-            // Verificar se pode enviar formulário
-            checkAndSubmitForm();
-        } else {
-            // Código incorreto
-            showError(emailCodeInput);
-            emailStatusIcon.classList.remove('bg-gray-300', 'dark:bg-gray-600');
-            emailStatusIcon.classList.add('error');
-            emailStatusIcon.innerHTML = '<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
-            emailStatusText.textContent = 'Código inválido';
-            emailStatusText.classList.remove('text-gray-500');
-            emailStatusText.classList.add('text-red-500');
-
-            // Limpar após 2 segundos
-            setTimeout(() => {
-                emailStatusIcon.classList.remove('error');
-                emailStatusIcon.classList.add('bg-gray-300', 'dark:bg-gray-600');
-                emailStatusIcon.innerHTML = '<svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>';
-                emailStatusText.textContent = 'Pendente';
-                emailStatusText.classList.remove('text-red-500');
-                emailStatusText.classList.add('text-gray-500');
-                emailCodeInput.value = '';
-                emailCodeInput.focus();
-            }, 2000);
-        }
+        // Verificar se pode enviar formulário
+        checkAndSubmitForm();
     });
 
     // Permitir Enter para validar

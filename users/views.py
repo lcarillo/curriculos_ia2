@@ -1,3 +1,5 @@
+# ===== Arquivo: C:\Users\lcarillo\Desktop\curriculos_ia\users\views.py =====
+
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout
 from django.contrib import messages
@@ -13,119 +15,149 @@ from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.views.decorators.csrf import csrf_protect
 
 from .forms import CustomUserCreationForm
-from .models import VerificationCode, Profile
+from .models import VerificationSession, Profile
+import secrets
 
+
+# ===== Arquivo: C:\Users\lcarillo\Desktop\curriculos_ia\users\views.py =====
 
 def signup(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            # Salva o usuário mas não commit ainda
-            user = form.save(commit=False)
-            user.is_active = False  # Usuário inativo até verificação
-            user.save()
+            # Cria sessão de verificação sem salvar o usuário
+            session_key = secrets.token_hex(20)
 
-            # AGORA SALVA O TELEFONE NO PERFIL
-            profile = user.profile
-            profile.phone = form.cleaned_data.get('phone')
-            profile.save()
+            verification_session = VerificationSession.objects.create(
+                session_key=session_key,
+                username=form.cleaned_data['username'],
+                first_name=form.cleaned_data['first_name'],
+                last_name=form.cleaned_data['last_name'],
+                email=form.cleaned_data['email'],
+                phone=form.cleaned_data['phone'],
+                password=form.cleaned_data['password1'],  # Será criptografada no save()
+            )
 
-            # Cria códigos de verificação
-            verification = VerificationCode.objects.create(user=user)
-            verification.send_email_verification()
-            verification.send_phone_verification()
+            # Envia códigos de verificação
+            verification_session.send_email_verification()
+            verification_session.send_phone_verification()
 
-            return redirect('verify_account', user_id=user.id)
+            # Armazena session_key na sessão do usuário
+            request.session['verification_session_key'] = session_key
+
+            return redirect('verify_account')
     else:
         form = CustomUserCreationForm()
 
     return render(request, 'users/signup.html', {'form': form})
 
+# ===== Arquivo: C:\Users\lcarillo\Desktop\curriculos_ia\users\views.py =====
 
-def verify_account(request, user_id):
-    try:
-        user = User.objects.get(id=user_id, is_active=False)
-    except User.DoesNotExist:
-        messages.error(request, "Usuário não encontrado ou já verificado.")
+@csrf_protect
+def verify_account(request):
+    session_key = request.session.get('verification_session_key')
+    if not session_key:
+        messages.error(request, "Sessão de verificação não encontrada. Por favor, inicie o cadastro novamente.")
         return redirect('signup')
 
-    # Obtém o perfil do usuário
     try:
-        profile = user.profile
-        phone = profile.phone
-    except Profile.DoesNotExist:
-        profile = Profile.objects.create(user=user)
-        phone = ""
-        messages.warning(request, "Perfil criado. Aguarde os códigos de verificação.")
+        verification_session = VerificationSession.objects.get(session_key=session_key)
+    except VerificationSession.DoesNotExist:
+        messages.error(request, "Sessão de verificação expirada ou inválida. Por favor, inicie o cadastro novamente.")
+        return redirect('signup')
 
-    verification = VerificationCode.objects.filter(user=user).order_by('-created_at').first()
-
-    if not verification:
-        verification = VerificationCode.objects.create(user=user)
-        verification.send_email_verification()
-        verification.send_phone_verification()
-        messages.info(request, "Códigos de verificação enviados.")
-
-    can_resend = True
-    if verification:
-        can_resend = timezone.now() > verification.created_at + timedelta(minutes=1)
+    if not verification_session.is_valid():
+        messages.error(request, "Sessão de verificação expirada. Por favor, inicie o cadastro novamente.")
+        if verification_session:
+            verification_session.delete()
+        return redirect('signup')
 
     if request.method == 'POST':
-        # Verifica se é um pedido de reenvio
+        # Verifica se é uma solicitação de reenvio
         if 'resend' in request.POST:
-            if can_resend:
-                verification = VerificationCode.objects.create(user=user)
-                verification.send_email_verification()
-                verification.send_phone_verification()
-                messages.success(request, "Códigos reenviados com sucesso!")
-                return redirect('verify_account', user_id=user.id)
+            verification_session.send_email_verification()
+            verification_session.send_phone_verification()
+            verification_session.verification_attempts += 1
+            verification_session.save()
+            messages.success(request, "Códigos reenviados com sucesso!")
+            return redirect('verify_account')
+
+        # Processar verificação dos códigos
+        phone_code = request.POST.get('phone_code', '').strip()
+        email_code = request.POST.get('email_code', '').strip()
+
+        # Debug: verificar o que está chegando no POST
+        print(f"Phone code received: {phone_code}")
+        print(f"Email code received: {email_code}")
+        print(f"Expected phone code: {verification_session.phone_code}")
+        print(f"Expected email code: {verification_session.email_code}")
+
+        # Verifica se os códigos foram fornecidos
+        if not phone_code or not email_code:
+            messages.error(request, "Por favor, preencha ambos os códigos.")
+        else:
+            # Verificar códigos
+            phone_valid = verification_session.verify_phone(phone_code)
+            email_valid = verification_session.verify_email(email_code)
+
+            print(f"Phone valid: {phone_valid}, Email valid: {email_valid}")
+
+            if phone_valid and email_valid:
+                # Cria usuário e faz login
+                try:
+                    user = verification_session.create_user()
+                    login(request, user)
+
+                    # Limpa sessão
+                    if 'verification_session_key' in request.session:
+                        del request.session['verification_session_key']
+
+                    messages.success(request, "Conta verificada com sucesso! Bem-vindo(a)!")
+                    return redirect('dashboard')
+                except Exception as e:
+                    print(f"Erro ao criar usuário: {e}")
+                    messages.error(request, "Erro ao criar conta. Por favor, tente novamente.")
             else:
-                messages.error(request, "Aguarde 1 minuto para reenviar os códigos.")
-                return redirect('verify_account', user_id=user.id)
+                verification_session.verification_attempts += 1
+                verification_session.save()
+                messages.error(request, "Códigos inválidos. Tente novamente.")
 
-        # Verifica se é a finalização da verificação
-        elif 'verify_complete' in request.POST:
-            phone_code = request.POST.get('phone_code', '')
-            email_code = request.POST.get('email_code', '')
-
-            # Verifica se ambos os códigos foram fornecidos
-            if not phone_code or not email_code:
-                messages.error(request, "Por favor, preencha ambos os códigos.")
-            # Verifica os códigos
-            elif verification and verification.verify_phone(phone_code) and verification.verify_email(email_code):
-                # Ativa o usuário
-                user.is_active = True
-                user.save()
-
-                # Atualiza o perfil como verificado
-                profile.email_verified = True
-                profile.phone_verified = True
-                profile.save()
-
-                messages.success(request, "Conta verificada com sucesso! Você já pode fazer login.")
-                return redirect('login')
-            else:
-                messages.error(request, "Códigos inválidos ou expirados. Tente novamente.")
+    # Formata telefone para exibição
+    phone_display = f"+55 ({verification_session.phone[:2]}) {verification_session.phone[2:7]}-{verification_session.phone[7:]}"
 
     return render(request, 'users/verify_account.html', {
-        'user': user,
-        'email': user.email,
-        'phone': phone,
-        'can_resend': can_resend,
-        'real_phone_code': verification.phone_code if verification else '',
-        'real_email_code': verification.email_code if verification else ''
+        'email': verification_session.email,
+        'phone': phone_display,
+        'attempts_left': verification_session.max_attempts - verification_session.verification_attempts
     })
-@login_required
+
 def resend_verification(request):
-    # Implementação simplificada - sempre permite reenvio
-    verification = VerificationCode.objects.create(user=request.user)
-    verification.send_email_verification()
-    verification.send_phone_verification()
+    session_key = request.session.get('verification_session_key')
+    if not session_key:
+        messages.error(request, "Sessão não encontrada.")
+        return redirect('signup')
+
+    try:
+        verification_session = VerificationSession.objects.get(session_key=session_key)
+    except VerificationSession.DoesNotExist:
+        messages.error(request, "Sessão expirada.")
+        return redirect('signup')
+
+    if not verification_session.is_valid():
+        messages.error(request, "Sessão expirada. Por favor, inicie o cadastro novamente.")
+        verification_session.delete()
+        return redirect('signup')
+
+    verification_session.send_email_verification()
+    verification_session.send_phone_verification()
+    verification_session.verification_attempts += 1
+    verification_session.save()
 
     messages.success(request, "Códigos reenviados com sucesso!")
-    return redirect('verify_account', user_id=request.user.id)
+    return redirect('verify_account')  # Agora sem parâmetros
 
 
 def user_login(request):
@@ -155,7 +187,7 @@ def profile(request):
     return render(request, 'users/profile.html', {'user': request.user})
 
 
-# Views para redefinição de senha personalizadas
+# Views personalizadas de redefinição de senha
 class CustomPasswordResetView(PasswordResetView):
     template_name = 'users/password_reset.html'
     email_template_name = 'users/password_reset_email.html'

@@ -1,7 +1,10 @@
+# ===== Arquivo: C:\Users\lcarillo\Desktop\curriculos_ia\users\forms.py =====
+
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from .models import Profile
+import re
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -39,23 +42,6 @@ class CustomUserCreationForm(UserCreationForm):
             raise forms.ValidationError('Este número de celular já está cadastrado.')
 
         return phone_clean
-
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.email = self.cleaned_data['email']
-        user.first_name = self.cleaned_data['first_name']
-        user.last_name = self.cleaned_data['last_name']
-        user.is_active = False  # Não ativar até verificar
-
-        if commit:
-            user.save()
-            # Garante que o perfil existe e atualiza o telefone
-            profile, created = Profile.objects.get_or_create(user=user)
-            profile.phone = self.cleaned_data['phone']
-            profile.save()
-            print(f"✅ Telefone salvo no perfil: {profile.phone}")  # Debug
-
-        return user
 
 
 class UserUpdateForm(UserChangeForm):

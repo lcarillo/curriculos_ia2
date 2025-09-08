@@ -1,10 +1,12 @@
+# ===== Arquivo: C:\Users\lcarillo\Desktop\curriculos_ia\users\urls.py =====
+
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
     path('signup/', views.signup, name='signup'),
-    path('verify/<int:user_id>/', views.verify_account, name='verify_account'),
+    path('verify/', views.verify_account, name='verify_account'),  # Removido o parâmetro user_id
     path('resend-verification/', views.resend_verification, name='resend_verification'),
     path('login/', views.user_login, name='login'),
     path('logout/', views.user_logout, name='logout'),
