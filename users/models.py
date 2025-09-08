@@ -72,10 +72,12 @@ class VerificationSession(models.Model):
         try:
             from twilio.rest import Client
             client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+            # Adicionar código do país +55 ao número
+            phone_with_country_code = f"+55{self.phone}"
             client.messages.create(
                 body=f"Seu código de verificação Currículos IA é: {self.phone_code}",
                 from_=settings.TWILIO_PHONE_NUMBER,
-                to=self.phone
+                to=phone_with_country_code  # Usar número com código do país
             )
             return True
         except Exception as e:

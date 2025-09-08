@@ -3,96 +3,118 @@
 {% block title %}Verificar Conta - Currículos IA{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-6">
         <div class="text-center">
-            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900">
-                <svg class="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-4">
+                <svg class="h-8 w-8 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
             </div>
-            <h2 class="mt-6 text-3xl font-bold text-gray-900 dark:text-white">Verificação em Duas Etapas</h2>
-            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Digite os códigos que enviamos para seu celular e e-mail</p>
+            <h2 class="mt-4 text-3xl font-bold text-gray-900 dark:text-white">Verificação em Duas Etapas</h2>
+            <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">Digite os códigos que enviamos para seu celular e e-mail</p>
             {% if attempts_left <= 3 %}
-            <p class="mt-2 text-sm text-yellow-600 dark:text-yellow-400">
-                ⚠️ Restam {{ attempts_left }} tentativa{{ attempts_left|pluralize }}
+            <p class="mt-2 text-sm text-yellow-600 dark:text-yellow-400 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Restam {{ attempts_left }} tentativa{{ attempts_left|pluralize }}
             </p>
             {% endif %}
         </div>
 
-        <form class="mt-6 space-y-4 bg-white dark:bg-gray-800 shadow-md rounded-lg p-6" method="POST" id="verification-form">
+        <form class="mt-6 space-y-4 bg-white dark:bg-gray-800 shadow-xl rounded-xl p-6 border border-gray-200 dark:border-gray-700" method="POST" id="verification-form">
             {% csrf_token %}
 
             {% if messages %}
                 {% for message in messages %}
-                <div class="{% if message.tags == 'error' %}bg-red-100 border border-red-400 text-red-700{% else %}bg-green-100 border border-green-400 text-green-700{% endif %} px-4 py-3 rounded relative" role="alert">
+                <div class="{% if message.tags == 'error' %}bg-red-100 border border-red-400 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300{% else %}bg-green-100 border border-green-400 text-green-700 dark:bg-green-900/20 dark:border-green-800 dark:text-green-300{% endif %} px-4 py-3 rounded-lg relative flex items-center" role="alert">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 {% if message.tags == 'error' %}text-red-500 dark:text-red-400{% else %}text-green-500 dark:text-green-400{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        {% if message.tags == 'error' %}
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        {% else %}
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        {% endif %}
+                    </svg>
                     <span class="block sm:inline">{{ message }}</span>
                 </div>
                 {% endfor %}
             {% endif %}
 
             <div id="phone-verification-section">
-                <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center justify-between mb-3">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Código enviado por SMS
                     </label>
-                    <span class="text-xs text-blue-500" id="phone-number-display">{{ phone }}</span>
+                    <span class="text-xs text-blue-600 dark:text-blue-400 font-medium" id="phone-number-display">{{ phone }}</span>
                 </div>
 
                 <div class="flex space-x-2">
                     <input name="phone_code" type="text" maxlength="6" required
-                           class="flex-1 text-center appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-md placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm font-mono text-lg"
+                           class="flex-1 text-center appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm font-mono text-lg tracking-widest transition-colors"
                            placeholder="000000" id="phone-code">
-                    <button type="button" id="validate-phone" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <button type="button" id="validate-phone" class="px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm">
                         Verificar
                     </button>
                 </div>
-                <div id="phone-status" class="hidden mt-2 text-sm"></div>
+                <div id="phone-status" class="hidden mt-2 text-sm flex items-center"></div>
             </div>
 
-            <div id="email-verification-section" class="hidden">
-                <hr class="my-4 border-gray-200 dark:border-gray-600">
+            <div id="email-verification-section" class="hidden opacity-0 transition-opacity duration-300">
+                <hr class="my-6 border-gray-200 dark:border-gray-700">
 
-                <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center justify-between mb-3">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Código enviado por E-mail
                     </label>
-                    <span class="text-xs text-blue-500">{{ email }}</span>
+                    <span class="text-xs text-blue-600 dark:text-blue-400 font-medium">{{ email }}</span>
                 </div>
 
                 <div class="flex space-x-2">
                     <input name="email_code" type="text" maxlength="6" required
-                           class="flex-1 text-center appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-md placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm font-mono text-lg"
+                           class="flex-1 text-center appearance-none block w-full px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg placeholder-gray-500 text-gray-900 dark:text-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm font-mono text-lg tracking-widest transition-colors"
                            placeholder="000000" id="email-code">
-                    <button type="button" id="validate-email" class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <button type="button" id="validate-email" class="px-4 py-3 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm">
                         Verificar
                     </button>
                 </div>
-                <div id="email-status" class="hidden mt-2 text-sm"></div>
+                <div id="email-status" class="hidden mt-2 text-sm flex items-center"></div>
             </div>
 
             <!-- Campos hidden para armazenar os códigos verificados -->
             <input type="hidden" name="verified_phone_code" id="verified-phone-code">
             <input type="hidden" name="verified_email_code" id="verified-email-code">
 
-            <div id="final-submit-section" class="hidden">
-                <hr class="my-4 border-gray-200 dark:border-gray-600">
-                <button type="submit" name="verify_complete" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+            <div id="final-submit-section" class="hidden opacity-0 transition-opacity duration-300">
+                <hr class="my-6 border-gray-200 dark:border-gray-700">
+                <button type="submit" name="verify_complete" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200 shadow-md">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-green-300 group-hover:text-green-200 transition-colors" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </span>
                     Finalizar Verificação
                 </button>
             </div>
         </form>
 
-        <div class="text-center space-y-2">
-            <form method="post" class="inline">
+        <div class="text-center space-y-3 pt-2">
+            <form method="post" class="inline" id="resend-form">
                 {% csrf_token %}
-                <button type="submit" name="resend" class="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
-                    Não recebeu os códigos? Reenviar
+                <button type="submit" name="resend" id="resend-button" class="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors flex items-center justify-center mx-auto disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span id="resend-text">Não recebeu os códigos? Reenviar</span>
+                    <span id="countdown" class="hidden ml-1">(60s)</span>
                 </button>
             </form>
             <div>
-                <a href="{% url 'signup' %}" class="text-sm text-gray-600 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300">
-                    ← Voltar para cadastro
+                <a href="{% url 'signup' %}" class="text-sm text-gray-600 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300 transition-colors inline-flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Voltar para cadastro
                 </a>
             </div>
         </div>
@@ -103,11 +125,13 @@
     .verified {
         background-color: #10B981 !important;
         color: white !important;
+        border-color: #10B981 !important;
     }
 
     .error {
         background-color: #EF4444 !important;
         color: white !important;
+        border-color: #EF4444 !important;
     }
 
     .shake {
@@ -118,6 +142,11 @@
         0%, 100% { transform: translateX(0); }
         10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
         20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+
+    /* Animações suaves para exibição de seções */
+    .fade-in {
+        opacity: 1 !important;
     }
 </style>
 
@@ -135,12 +164,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('verification-form');
     const verifiedPhoneCode = document.getElementById('verified-phone-code');
     const verifiedEmailCode = document.getElementById('verified-email-code');
+    const resendButton = document.getElementById('resend-button');
+    const resendText = document.getElementById('resend-text');
+    const countdownElement = document.getElementById('countdown');
 
     let phoneVerified = false;
     let emailVerified = false;
+    let countdown = 60;
+    let countdownInterval;
+
+    // Iniciar temporizador se a página foi carregada após tentativa de reenvio
+    if (localStorage.getItem('resendCooldown')) {
+        startCountdown();
+    }
 
     // Focar no campo de código do celular
-    phoneCodeInput.focus();
+    setTimeout(() => {
+        phoneCodeInput.focus();
+    }, 300);
 
     // Auto-avançar entre dígitos
     phoneCodeInput.addEventListener('input', function() {
@@ -172,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Simular carregamento
         validatePhoneBtn.disabled = true;
-        validatePhoneBtn.textContent = 'Verificando...';
+        validatePhoneBtn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
         // Fazer requisição AJAX para verificar o código
         fetch("{% url 'verify_phone_code' %}", {
@@ -189,38 +230,45 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.valid) {
                 phoneVerified = true;
-                phoneStatus.textContent = '✓ Código válido';
-                phoneStatus.className = 'text-green-600 dark:text-green-400';
-                phoneStatus.classList.remove('hidden');
+                phoneStatus.innerHTML = '<svg class="h-5 w-5 text-green-500 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Código válido';
+                phoneStatus.className = 'mt-2 text-sm text-green-600 dark:text-green-400 flex items-center';
 
                 // Armazenar código verificado no campo hidden
                 verifiedPhoneCode.value = phoneCodeInput.value;
 
+                // Mostrar seção de email com animação
                 emailSection.classList.remove('hidden');
-                validatePhoneBtn.textContent = 'Verificado';
+                setTimeout(() => {
+                    emailSection.classList.add('fade-in');
+                    emailCodeInput.focus();
+                }, 10);
+
+                validatePhoneBtn.innerHTML = 'Verificado';
+                validatePhoneBtn.classList.add('verified');
                 validatePhoneBtn.disabled = true;
                 phoneCodeInput.disabled = true;
 
                 // Verificar se pode mostrar o botão de finalização
                 if (phoneVerified && emailVerified) {
                     finalSubmitSection.classList.remove('hidden');
+                    setTimeout(() => {
+                        finalSubmitSection.classList.add('fade-in');
+                    }, 10);
                 }
             } else {
-                phoneStatus.textContent = '✗ ' + data.error;
-                phoneStatus.className = 'text-red-600 dark:text-red-400';
-                phoneStatus.classList.remove('hidden');
+                phoneStatus.innerHTML = '<svg class="h-5 w-5 text-red-500 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> ' + data.error;
+                phoneStatus.className = 'mt-2 text-sm text-red-600 dark:text-red-400 flex items-center';
                 validatePhoneBtn.disabled = false;
-                validatePhoneBtn.textContent = 'Verificar';
+                validatePhoneBtn.innerHTML = 'Verificar';
                 showError(phoneCodeInput);
             }
         })
         .catch(error => {
             console.error('Erro:', error);
-            phoneStatus.textContent = '✗ Erro de conexão';
-            phoneStatus.className = 'text-red-600 dark:text-red-400';
-            phoneStatus.classList.remove('hidden');
+            phoneStatus.innerHTML = '<svg class="h-5 w-5 text-red-500 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Erro de conexão';
+            phoneStatus.className = 'mt-2 text-sm text-red-600 dark:text-red-400 flex items-center';
             validatePhoneBtn.disabled = false;
-            validatePhoneBtn.textContent = 'Verificar';
+            validatePhoneBtn.innerHTML = 'Verificar';
         });
     });
 
@@ -233,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Simular carregamento
         validateEmailBtn.disabled = true;
-        validateEmailBtn.textContent = 'Verificando...';
+        validateEmailBtn.innerHTML = '<svg class="animate-spin h-5 w-5 text-white mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
 
         // Fazer requisição AJAX para verificar o código
         fetch("{% url 'verify_email_code' %}", {
@@ -250,37 +298,38 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.valid) {
                 emailVerified = true;
-                emailStatus.textContent = '✓ Código válido';
-                emailStatus.className = 'text-green-600 dark:text-green-400';
-                emailStatus.classList.remove('hidden');
+                emailStatus.innerHTML = '<svg class="h-5 w-5 text-green-500 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Código válido';
+                emailStatus.className = 'mt-2 text-sm text-green-600 dark:text-green-400 flex items-center';
 
                 // Armazenar código verificado no campo hidden
                 verifiedEmailCode.value = emailCodeInput.value;
 
-                validateEmailBtn.textContent = 'Verificado';
+                validateEmailBtn.innerHTML = 'Verificado';
+                validateEmailBtn.classList.add('verified');
                 validateEmailBtn.disabled = true;
                 emailCodeInput.disabled = true;
 
                 // Verificar se pode mostrar o botão de finalização
                 if (phoneVerified && emailVerified) {
                     finalSubmitSection.classList.remove('hidden');
+                    setTimeout(() => {
+                        finalSubmitSection.classList.add('fade-in');
+                    }, 10);
                 }
             } else {
-                emailStatus.textContent = '✗ ' + data.error;
-                emailStatus.className = 'text-red-600 dark:text-red-400';
-                emailStatus.classList.remove('hidden');
+                emailStatus.innerHTML = '<svg class="h-5 w-5 text-red-500 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> ' + data.error;
+                emailStatus.className = 'mt-2 text-sm text-red-600 dark:text-red-400 flex items-center';
                 validateEmailBtn.disabled = false;
-                validateEmailBtn.textContent = 'Verificar';
+                validateEmailBtn.innerHTML = 'Verificar';
                 showError(emailCodeInput);
             }
         })
         .catch(error => {
             console.error('Erro:', error);
-            emailStatus.textContent = '✗ Erro de conexão';
-            emailStatus.className = 'text-red-600 dark:text-red-400';
-            emailStatus.classList.remove('hidden');
+            emailStatus.innerHTML = '<svg class="h-5 w-5 text-red-500 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg> Erro de conexão';
+            emailStatus.className = 'mt-2 text-sm text-red-600 dark:text-red-400 flex items-center';
             validateEmailBtn.disabled = false;
-            validateEmailBtn.textContent = 'Verificar';
+            validateEmailBtn.innerHTML = 'Verificar';
         });
     });
 
@@ -317,6 +366,33 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             e.preventDefault();
         });
+    });
+
+    // Função para iniciar a contagem regressiva
+    function startCountdown() {
+        resendButton.disabled = true;
+        countdownElement.classList.remove('hidden');
+        resendText.textContent = 'Reenviar código em';
+
+        countdownInterval = setInterval(function() {
+            countdown--;
+            countdownElement.textContent = `(${countdown}s)`;
+
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                resendButton.disabled = false;
+                countdownElement.classList.add('hidden');
+                resendText.textContent = 'Não recebeu os códigos? Reenviar';
+                countdown = 60;
+                localStorage.removeItem('resendCooldown');
+            }
+        }, 1000);
+    }
+
+    // Evento de clique no botão de reenvio
+    resendButton.addEventListener('click', function() {
+        localStorage.setItem('resendCooldown', 'true');
+        startCountdown();
     });
 });
 </script>
