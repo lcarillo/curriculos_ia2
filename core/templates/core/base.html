@@ -1,66 +1,210 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Currículos IA{% endblock %}</title>
+    <title>{% block title %}Currículos IA - Otimize seu currículo com Inteligência Artificial{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .logo-gradient {
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .nav-link {
+            position: relative;
+        }
+        .nav-link:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: #4F46E5;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover:after {
+            width: 100%;
+        }
+        .footer-link {
+            transition: all 0.3s ease;
+        }
+        .footer-link:hover {
+            transform: translateX(5px);
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col transition-colors duration-300">
     <!-- Navbar -->
-    <nav class="bg-white shadow-md">
+    <nav class="bg-white dark:bg-gray-800 shadow-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <a href="{% url 'home' %}" class="flex-shrink-0 flex items-center">
-                        <span class="text-2xl font-bold text-blue-600">Currículos IA</span>
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center mr-3 shadow-md">
+                            <i class="fas fa-brain text-white text-lg"></i>
+                        </div>
+                        <span class="text-xl font-bold logo-gradient">CurrículosIA</span>
                     </a>
-                    <div class="hidden md:ml-6 md:flex md:space-x-8">
-                        <a href="{% url 'home' %}" class="text-gray-900 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Início</a>
-                        <a href="{% url 'pricing' %}" class="text-gray-900 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Planos</a>
+                    <div class="hidden md:ml-10 md:flex md:space-x-8">
+                        <a href="{% url 'home' %}" class="nav-link text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition duration-300">Início</a>
+                        <a href="{% url 'pricing' %}" class="nav-link text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition duration-300">Planos</a>
+                        <a href="#" class="nav-link text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition duration-300">Recursos</a>
+                        <a href="#" class="nav-link text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-sm font-medium transition duration-300">Sobre</a>
                     </div>
                 </div>
                 <div class="flex items-center">
+                    <!-- Dark mode toggle -->
+                    <button id="theme-toggle" class="p-2 mr-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg focus:outline-none">
+                        <i class="fas fa-moon hidden dark:inline-block"></i>
+                        <i class="fas fa-sun dark:hidden"></i>
+                    </button>
+
                     {% if user.is_authenticated %}
-                        <a href="{% url 'dashboard' %}" class="ml-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium">Dashboard</a>
+                        <a href="{% url 'dashboard' %}" class="ml-4 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-md hover:from-blue-700 hover:to-purple-700 text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">
+                            <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                        </a>
                         <form action="{% url 'logout' %}" method="post" class="inline ml-2">
                             {% csrf_token %}
-                            <button type="submit" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-medium">
-                                Sair
+                            <button type="submit" class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 text-sm font-medium transition duration-300">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Sair
                             </button>
                         </form>
                     {% else %}
-                        <a href="{% url 'login' %}" class="ml-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium">Entrar</a>
-                        <a href="{% url 'signup' %}" class="ml-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm font-medium">Cadastrar</a>
+                        <a href="{% url 'login' %}" class="ml-4 px-4 py-2 text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 rounded-md hover:bg-blue-50 dark:hover:bg-gray-700 text-sm font-medium transition duration-300">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Entrar
+                        </a>
+                        <a href="{% url 'signup' %}" class="ml-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-md hover:from-blue-700 hover:to-purple-700 text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">
+                            <i class="fas fa-user-plus mr-2"></i>Cadastrar
+                        </a>
                     {% endif %}
                 </div>
             </div>
         </div>
     </nav>
 
+    <!-- Mobile menu (Alpine.js) -->
+    <div x-data="{ open: false }" class="md:hidden bg-white dark:bg-gray-800 shadow-md">
+        <div class="px-4 pt-2 pb-3 space-y-1 sm:px-3">
+            <button @click="open = !open" class="w-full flex justify-between items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-base font-medium">
+                <span>Menu</span>
+                <i class="fas" :class="open ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+            </button>
+            <div x-show="open" x-collapse class="space-y-1 pl-5">
+                <a href="{% url 'home' %}" class="block nav-link text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-base font-medium">Início</a>
+                <a href="{% url 'pricing' %}" class="block nav-link text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-base font-medium">Planos</a>
+                <a href="#" class="block nav-link text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-base font-medium">Recursos</a>
+                <a href="#" class="block nav-link text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md text-base font-medium">Sobre</a>
+            </div>
+        </div>
+    </div>
+
     <!-- Conteúdo principal -->
-    <main>
+    <main class="flex-grow">
         {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white mt-12 py-8 border-t border-gray-200">
+    <footer class="bg-gray-800 text-white mt-12 py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="md:flex md:items-center md:justify-between">
-                <div class="text-center md:text-left">
-                    <p class="text-sm text-gray-500">
-                        &copy; 2025 Currículos IA. Todos os direitos reservados.
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center mr-3 shadow-md">
+                            <i class="fas fa-brain text-white text-lg"></i>
+                        </div>
+                        <span class="text-xl font-bold text-white">CurrículosIA</span>
+                    </div>
+                    <p class="text-gray-400 mb-4">
+                        Transformando currículos com inteligência artificial para ajudar você a conquistar a vaga dos sonhos.
                     </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                            <i class="fab fa-facebook-f text-lg"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                            <i class="fab fa-instagram text-lg"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                            <i class="fab fa-linkedin-in text-lg"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-white transition duration-300">
+                            <i class="fab fa-twitter text-lg"></i>
+                        </a>
+                    </div>
                 </div>
-                <div class="mt-4 flex justify-center md:mt-0">
-                    <a href="{% url 'terms' %}" class="text-sm text-gray-500 hover:text-gray-600 ml-6">Termos de Uso</a>
-                    <a href="#" class="text-sm text-gray-500 hover:text-gray-600 ml-6">Privacidade</a>
+
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Recursos</h3>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Análise de Currículo</a></li>
+                        <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Compatibilidade com Vagas</a></li>
+                        <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Sugestões Personalizadas</a></li>
+                        <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Modelos de Currículo</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Empresa</h3>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Sobre Nós</a></li>
+                        <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Blog</a></li>
+                        <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Carreiras</a></li>
+                        <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Contato</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Suporte</h3>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Centro de Ajuda</a></li>
+                        <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> FAQ</a></li>
+                        <li><a href="{% url 'terms' %}" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Termos de Uso</a></li>
+                        <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Política de Privacidade</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-700 mt-10 pt-6 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-sm text-gray-400">
+                    &copy; 2025 Currículos IA. Todos os direitos reservados.
+                </p>
+                <div class="mt-4 md:mt-0 flex space-x-6">
+                    <a href="#" class="text-sm text-gray-400 hover:text-white transition duration-300">Termos</a>
+                    <a href="#" class="text-sm text-gray-400 hover:text-white transition duration-300">Privacidade</a>
+                    <a href="#" class="text-sm text-gray-400 hover:text-white transition duration-300">Cookies</a>
                 </div>
             </div>
         </div>
     </footer>
+
+    <script>
+        // Dark mode functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        // Check for saved theme preference or respect OS preference
+        if (localStorage.getItem('theme') === 'dark' ||
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            html.classList.add('dark');
+        } else {
+            html.classList.remove('dark');
+        }
+
+        // Toggle theme
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        });
+    </script>
 
     {% block extra_js %}{% endblock %}
 </body>
