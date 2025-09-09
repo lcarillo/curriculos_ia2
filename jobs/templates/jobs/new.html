@@ -1,88 +1,166 @@
 {% extends 'core/base.html' %}
+{% load static %}
 
 {% block title %}Nova Vaga - Currículos IA{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">Adicionar Nova Vaga</h1>
-            
-            <form method="POST" class="space-y-6">
+        <!-- Header Section -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                Adicionar <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">Nova Vaga</span>
+            </h1>
+            <p class="text-xl text-gray-600 dark:text-gray-300">
+                Registre oportunidades para análise de compatibilidade
+            </p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
+            <form method="POST" class="space-y-8">
                 {% csrf_token %}
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            {{ form.title.label }}
-                        </label>
+
+                <!-- Grid com dois campos -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Título da Vaga -->
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-xl border border-blue-100 dark:border-gray-700">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ form.title.label }}</h3>
+                        </div>
                         {{ form.title }}
                         {% if form.title.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.title.errors.0 }}</p>
+                            <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ form.title.errors.0 }}</p>
                         {% endif %}
                     </div>
-                    
-                    <div>
-                        <label for="{{ form.company.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            {{ form.company.label }}
-                        </label>
+
+                    <!-- Empresa -->
+                    <div class="bg-gradient-to-br from-green-50 to-teal-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-xl border border-green-100 dark:border-gray-700">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                                <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ form.company.label }}</h3>
+                        </div>
                         {{ form.company }}
                         {% if form.company.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.company.errors.0 }}</p>
+                            <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ form.company.errors.0 }}</p>
                         {% endif %}
                     </div>
                 </div>
-                
-                <div>
-                    <label for="{{ form.url.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {{ form.url.label }}
-                    </label>
+
+                <!-- URL da Vaga -->
+                <div class="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-xl border border-purple-100 dark:border-gray-700">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center mr-3">
+                            <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ form.url.label }}</h3>
+                    </div>
                     {{ form.url }}
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ form.url.help_text }}</p>
+                    <p class="mt-2 text-sm text-purple-600 dark:text-purple-400">{{ form.url.help_text }}</p>
                     {% if form.url.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.url.errors.0 }}</p>
+                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ form.url.errors.0 }}</p>
                     {% endif %}
                 </div>
-                
-                <div>
-                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {{ form.description.label }}
-                    </label>
+
+                <!-- Descrição da Vaga -->
+                <div class="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-xl border border-indigo-100 dark:border-gray-700">
+                    <div class="flex items-center mb-4">
+                        <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center mr-3">
+                            <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ form.description.label }}</h3>
+                    </div>
                     {{ form.description }}
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ form.description.help_text }}</p>
+                    <p class="mt-2 text-sm text-indigo-600 dark:text-indigo-400">{{ form.description.help_text }}</p>
                     {% if form.description.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ form.description.errors.0 }}</p>
                     {% endif %}
                 </div>
-                
-                <div class="flex justify-between items-center">
-                    <a href="{% url 'dashboard' %}" class="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 font-medium">
+
+                <!-- Botões -->
+                <div class="flex flex-col-reverse sm:flex-row justify-between items-center gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <a href="{% url 'dashboard' %}" class="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-300 font-medium">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
                         Cancelar
                     </a>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
+                    <button type="submit" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg w-full sm:w-auto flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
                         Salvar Vaga
                     </button>
                 </div>
             </form>
-            
-            <div class="mt-8 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Dica</h3>
-                <p class="text-gray-600 dark:text-gray-300 text-sm">
-                    Cole o link da vaga para extração automática ou cole o texto completo da descrição.
-                    Quanto mais informações, melhor será a análise de compatibilidade com seu currículo.
-                </p>
+
+            <!-- Dica -->
+            <div class="mt-8 p-6 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 rounded-xl border border-yellow-100 dark:border-yellow-800/30">
+                <div class="flex items-start">
+                    <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+                        <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
+                            Dica Importante
+                        </h3>
+                        <p class="text-yellow-700 dark:text-yellow-300">
+                            Cole o link da vaga para extração automática ou cole o texto completo da descrição.
+                            Quanto mais informações, melhor será a análise de compatibilidade com seu currículo.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-.form-input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white;
-}
+    input, textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.75rem;
+        background-color: white;
+        color: #374151;
+        transition: all 0.3s ease;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    }
 
-.form-textarea {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white;
-}
+    input:focus, textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+
+    .dark input, .dark textarea {
+        background-color: #374151;
+        border-color: #4b5563;
+        color: #e5e7eb;
+    }
+
+    .dark input:focus, .dark textarea:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+    }
+
+    textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
 </style>
 {% endblock %}
