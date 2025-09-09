@@ -1,77 +1,147 @@
 {% extends 'core/base.html' %}
+{% load static %}
 
 {% block title %}Upload de Currículo - Currículos IA{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-6">Envie seu currículo</h1>
-            
+        <!-- Header Section -->
+        <div class="text-center mb-10">
+            <div class="w-20 h-20 mx-auto bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg mb-6">
+                <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                Envie seu <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">Currículo</span>
+            </h1>
+            <p class="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                Faça upload do seu currículo e deixe a IA analisar e otimizar para as melhores oportunidades
+            </p>
+        </div>
+
+        <!-- Upload Form Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-100 dark:border-gray-700">
             <form method="POST" enctype="multipart/form-data" class="space-y-6">
                 {% csrf_token %}
-                
+
+                <!-- File Upload Area -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {{ form.resume_file.label }}
+                    <label class="block text-lg font-medium text-gray-900 dark:text-white mb-4 text-center">
+                        Selecione seu arquivo
                     </label>
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md dark:border-gray-600">
-                        <div class="space-y-1 text-center">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+
+                    <div class="mt-1 flex justify-center px-6 pt-10 pb-8 border-2 border-dashed rounded-2xl border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-purple-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                        <div class="space-y-4 text-center relative z-10">
+                            <svg class="mx-auto h-16 w-16 text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors duration-300" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            <div class="flex text-sm text-gray-600 dark:text-gray-400">
-                                <label for="resume_file" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 dark:bg-gray-800 dark:text-blue-400 dark:hover:text-blue-300">
-                                    <span>Selecione um arquivo</span>
+
+                            <div class="flex flex-col sm:flex-row text-sm text-gray-600 dark:text-gray-400 justify-center items-center">
+                                <label for="resume_file" class="relative cursor-pointer bg-white dark:bg-gray-700 rounded-md font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
+                                    <span>Procurar arquivo</span>
                                     <input id="resume_file" name="resume_file" type="file" class="sr-only" accept=".pdf,.doc,.docx">
                                 </label>
-                                <p class="pl-1">ou arraste e solte</p>
+                                <p class="mt-2 sm:mt-0 sm:ml-4">ou arraste e solte aqui</p>
                             </div>
+
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                PDF, DOC ou DOCX até 10MB
+                                PDF, DOC ou DOCX (até 10MB)
                             </p>
                         </div>
                     </div>
+
                     {% if form.resume_file.errors %}
-                        <p class="mt-2 text-sm text-red-600">{{ form.resume_file.errors.0 }}</p>
+                        <p class="mt-2 text-sm text-red-600 dark:text-red-400 text-center">{{ form.resume_file.errors.0 }}</p>
                     {% endif %}
                 </div>
-                
-                <div>
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300">
-                        Processar Currículo
+
+                <!-- Submit Button -->
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                        Processar Currículo com IA
                     </button>
                 </div>
             </form>
-            
-            <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-                <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">Por que enviar seu currículo?</h3>
-                <ul class="text-blue-700 dark:text-blue-300 space-y-1 text-sm">
-                    <li>• Análise automática de compatibilidade com vagas</li>
-                    <li>• Sugestões de melhoria com IA</li>
-                    <li>• Export para PDF e DOCX otimizados</li>
-                    <li>• Acompanhamento da sua evolução profissional</li>
+
+            <!-- Info Box -->
+            <div class="mt-10 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-2xl p-6 border border-blue-100 dark:border-blue-800/50">
+                <h3 class="text-xl font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Por que enviar seu currículo?
+                </h3>
+                <ul class="text-blue-700 dark:text-blue-300 space-y-2">
+                    <li class="flex items-start">
+                        <span class="bg-blue-600 dark:bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-3 flex-shrink-0">✓</span>
+                        <span>Análise automática de compatibilidade com vagas</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-blue-600 dark:bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-3 flex-shrink-0">✓</span>
+                        <span>Sugestões de melhoria personalizadas com IA</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-blue-600 dark:bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-3 flex-shrink-0">✓</span>
+                        <span>Export para PDF e DOCX otimizados</span>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="bg-blue-600 dark:bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold mr-3 flex-shrink-0">✓</span>
+                        <span>Acompanhamento da sua evolução profissional</span>
+                    </li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
-    <!-- Adicione este script no final do template resumes/upload.html -->
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('resume_file');
     const fileLabel = document.querySelector('label[for="resume_file"]');
+    const dropZone = document.querySelector('.border-dashed');
 
+    // Handle file selection
     fileInput.addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
             const fileName = e.target.files[0].name;
-            // Atualiza o texto para mostrar o nome do arquivo
             fileLabel.querySelector('span').textContent = 'Arquivo selecionado: ' + fileName;
 
-            // Adiciona visualmente que um arquivo foi selecionado
-            const dropZone = document.querySelector('.border-dashed');
-            dropZone.classList.add('border-green-500', 'border-2');
-            dropZone.classList.remove('border-gray-300', 'border-2');
+            // Visual feedback
+            dropZone.classList.add('border-green-500', 'bg-green-50/50', 'dark:bg-green-900/20');
+            dropZone.classList.remove('border-gray-300', 'dark:border-gray-600');
+
+            // Change icon color
+            const uploadIcon = dropZone.querySelector('svg');
+            uploadIcon.classList.add('text-green-500');
+            uploadIcon.classList.remove('text-gray-400');
+        }
+    });
+
+    // Drag and drop functionality
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('border-blue-500', 'bg-blue-50/50', 'dark:bg-blue-900/20');
+        this.classList.remove('border-gray-300', 'dark:border-gray-600');
+    });
+
+    dropZone.addEventListener('dragleave', function() {
+        this.classList.remove('border-blue-500', 'bg-blue-50/50', 'dark:bg-blue-900/20');
+        this.classList.add('border-gray-300', 'dark:border-gray-600');
+    });
+
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            const event = new Event('change', { bubbles: true });
+            fileInput.dispatchEvent(event);
         }
     });
 });
