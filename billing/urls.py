@@ -6,4 +6,5 @@ urlpatterns = [
     path('success/', views.success, name='checkout_success'),
     path('cancel/', views.cancel, name='checkout_cancel'),
     path('portal/', views.billing_portal, name='billing_portal'),
+    path('webhook/', views.stripe_webhook, name='stripe_webhook'),  # Nova URL para webhook
 ]
