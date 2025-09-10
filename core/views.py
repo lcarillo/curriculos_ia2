@@ -22,16 +22,30 @@ def terms(request):
     return render(request, 'core/terms.html')
 
 
+from billing.models import Subscription
+
 @login_required
 def dashboard(request):
-    """Dashboard do usuário"""
     resumes_count = Resume.objects.filter(user=request.user).count()
     jobs_count = JobPosting.objects.filter(user=request.user).count()
-    analyses_count = Analysis.objects.filter(user=request.user).count()  # Descomente esta linha
+    analyses_count = Analysis.objects.filter(user=request.user).count()
+
+    # Verificar assinatura
+    has_active_subscription = False
+    subscription_plan = "Gratuito"
+
+    # Buscar assinatura ativa do usuário
+    active_subscription = Subscription.objects.filter(user=request.user, status='active').first()
+
+    if active_subscription:
+        has_active_subscription = True
+        subscription_plan = active_subscription.plan.name
 
     context = {
         'resumes_count': resumes_count,
         'jobs_count': jobs_count,
-        'analyses_count': analyses_count,  # Descomente esta linha
+        'analyses_count': analyses_count,
+        'has_active_subscription': has_active_subscription,
+        'subscription_plan': subscription_plan,
     }
     return render(request, 'core/dashboard.html', context)
