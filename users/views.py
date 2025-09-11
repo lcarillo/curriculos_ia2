@@ -23,6 +23,9 @@ import secrets
 
 
 def signup(request):
+    if request.user.is_authenticated:
+        messages.warning(request, "Você já possui uma conta.")
+        return redirect('dashboard')
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
@@ -207,6 +210,9 @@ def resend_verification(request):
 
 
 def user_login(request):
+    if request.user.is_authenticated:
+        messages.warning(request, "Você já está logado.")
+        return redirect('dashboard')
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():

@@ -107,12 +107,28 @@ def stripe_webhook(request):
         return HttpResponse(status=400)
 
     # Processar eventos relevantes
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        handle_checkout_session(session)
-    elif event['type'] == 'invoice.paid':
-        # Processar invoice pago se necessário
-        pass
+    event_type = event['type']
+    data_object = event['data']['object']
+
+    print(f"📨 Recebido evento do Stripe: {event_type}")
+
+    # Eventos de checkout
+    if event_type == 'checkout.session.completed':
+        handle_checkout_session(data_object)
+
+    # Eventos de assinatura (CRÍTICOS para sincronização)
+    elif event_type == 'customer.subscription.updated':
+        handle_subscription_event(data_object, 'updated')
+    elif event_type == 'customer.subscription.deleted':
+        handle_subscription_event(data_object, 'deleted')
+    elif event_type == 'customer.subscription.created':
+        handle_subscription_event(data_object, 'created')
+
+    # Eventos de invoice
+    elif event_type == 'invoice.paid':
+        handle_invoice_event(data_object, 'paid')
+    elif event_type == 'invoice.payment_failed':
+        handle_invoice_event(data_object, 'payment_failed')
 
     return HttpResponse(status=200)
 
@@ -151,3 +167,53 @@ def handle_checkout_session(session):
         print(f"❌ Erro ao processar checkout: {e}")
     except Exception as e:
         print(f"❌ Erro inesperado ao processar checkout: {e}")
+
+
+def handle_subscription_event(subscription, event_type):
+    """Processar eventos de assinatura"""
+    from .models import Subscription
+    from django.contrib.auth.models import User
+
+    try:
+        stripe_subscription_id = subscription['id']
+        customer_id = subscription['customer']
+        status = subscription['status']
+
+        print(f"🔔 Evento de assinatura: {event_type}, Status: {status}, ID: {stripe_subscription_id}")
+
+        # Encontrar a assinatura no banco de dados
+        try:
+            sub = Subscription.objects.get(stripe_subscription_id=stripe_subscription_id)
+        except Subscription.DoesNotExist:
+            # Se não encontrar, tentar encontrar pelo customer_id
+            try:
+                user = User.objects.get(subscription__stripe_customer_id=customer_id)
+                sub = user.subscription
+            except (User.DoesNotExist, Subscription.DoesNotExist):
+                print(f"❌ Assinatura não encontrada para ID: {stripe_subscription_id}")
+                return
+
+        # Atualizar status
+        sub.status = status
+
+        # Atualizar datas se disponíveis
+        if subscription.get('current_period_start'):
+            sub.current_period_start = datetime.fromtimestamp(subscription['current_period_start'])
+        if subscription.get('current_period_end'):
+            sub.current_period_end = datetime.fromtimestamp(subscription['current_period_end'])
+        if subscription.get('canceled_at'):
+            sub.canceled_at = datetime.fromtimestamp(subscription['canceled_at'])
+        if subscription.get('ended_at'):
+            sub.ended_at = datetime.fromtimestamp(subscription['ended_at'])
+
+        sub.save()
+        print(f"✅ Assinatura {stripe_subscription_id} atualizada para status {status}")
+
+    except Exception as e:
+        print(f"❌ Erro ao processar evento de assinatura: {e}")
+
+
+def handle_invoice_event(invoice, event_type):
+    """Processar eventos de fatura"""
+    print(f"🧾 Evento de fatura: {event_type}, ID: {invoice.get('id')}")
+    # Você pode adicionar lógica adicional para processar faturas aqui

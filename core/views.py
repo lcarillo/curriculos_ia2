@@ -33,6 +33,7 @@ def dashboard(request):
     # Verificar assinatura
     has_active_subscription = False
     subscription_plan = "Gratuito"
+    subscription_end = None
 
     # Buscar assinatura ativa do usuário
     active_subscription = Subscription.objects.filter(user=request.user, status='active').first()
@@ -40,6 +41,7 @@ def dashboard(request):
     if active_subscription:
         has_active_subscription = True
         subscription_plan = active_subscription.plan.name
+        subscription_end = active_subscription.current_period_end
 
     context = {
         'resumes_count': resumes_count,
@@ -47,5 +49,6 @@ def dashboard(request):
         'analyses_count': analyses_count,
         'has_active_subscription': has_active_subscription,
         'subscription_plan': subscription_plan,
+        'subscription_end': subscription_end,  # Add this
     }
     return render(request, 'core/dashboard.html', context)
