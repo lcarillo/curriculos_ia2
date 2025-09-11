@@ -196,11 +196,35 @@ def handle_subscription_event(subscription, event_type):
         # Atualizar status
         sub.status = status
 
-        # Atualizar datas se disponíveis
+        # Extrair datas de período - verificar em items.data[0] se não estiver no nível raiz
+        current_period_start = None
+        current_period_end = None
+
+        # Primeiro tenta obter do nível raiz
         if subscription.get('current_period_start'):
-            sub.current_period_start = datetime.fromtimestamp(subscription['current_period_start'])
+            current_period_start = datetime.fromtimestamp(subscription['current_period_start'])
+        elif (subscription.get('items') and
+              subscription['items'].get('data') and
+              len(subscription['items']['data']) > 0 and
+              subscription['items']['data'][0].get('current_period_start')):
+            current_period_start = datetime.fromtimestamp(subscription['items']['data'][0]['current_period_start'])
+
+        # Mesma lógica para current_period_end
         if subscription.get('current_period_end'):
-            sub.current_period_end = datetime.fromtimestamp(subscription['current_period_end'])
+            current_period_end = datetime.fromtimestamp(subscription['current_period_end'])
+        elif (subscription.get('items') and
+              subscription['items'].get('data') and
+              len(subscription['items']['data']) > 0 and
+              subscription['items']['data'][0].get('current_period_end')):
+            current_period_end = datetime.fromtimestamp(subscription['items']['data'][0]['current_period_end'])
+
+        # Atualizar datas se encontradas
+        if current_period_start:
+            sub.current_period_start = current_period_start
+        if current_period_end:
+            sub.current_period_end = current_period_end
+
+        # Atualizar outras datas se disponíveis
         if subscription.get('canceled_at'):
             sub.canceled_at = datetime.fromtimestamp(subscription['canceled_at'])
         if subscription.get('ended_at'):
@@ -208,10 +232,12 @@ def handle_subscription_event(subscription, event_type):
 
         sub.save()
         print(f"✅ Assinatura {stripe_subscription_id} atualizada para status {status}")
+        print(f"📅 Novo período: {sub.current_period_start} até {sub.current_period_end}")
 
     except Exception as e:
         print(f"❌ Erro ao processar evento de assinatura: {e}")
-
+        import traceback
+        traceback.print_exc()
 
 def handle_invoice_event(invoice, event_type):
     """Processar eventos de fatura"""
