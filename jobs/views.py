@@ -5,7 +5,12 @@ from .models import JobPosting
 from .forms import JobPostingForm
 from .services.job_scraper import scrape_job_posting
 
+from .models import JobPosting
 
+@login_required
+def job_list(request):
+    jobs = JobPosting.objects.filter(user=request.user)
+    return render(request, 'jobs/list.html', {'jobs': jobs})
 @login_required
 def create_job_posting(request):
     """View para criar uma nova vaga"""

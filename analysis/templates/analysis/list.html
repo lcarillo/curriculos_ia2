@@ -1,0 +1,74 @@
+<!-- ===== Arquivo: C:\Users\lcarillo\Desktop\curriculos_ia1\analysis\templates\analysis\list.html ===== -->
+
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Minhas Análises - Currículos IA{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                Minhas <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">Análises</span>
+            </h1>
+            <p class="text-xl text-gray-600 dark:text-gray-300">
+                Histórico de análises de compatibilidade realizadas
+            </p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-100 dark:border-gray-700">
+            {% if analyses %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for analysis in analyses %}
+                    <div class="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-700 dark:to-gray-800 rounded-2xl p-6 border border-purple-100 dark:border-gray-700 hover:shadow-lg transition-shadow duration-300">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-xl flex items-center justify-center">
+                                <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium {% if analysis.status == 'completed' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% elif analysis.status == 'processing' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200{% else %}bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200{% endif %}">
+                                {{ analysis.get_status_display }}
+                            </span>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 truncate">{{ analysis.resume.file_name }}</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Vaga: {{ analysis.job.title }}</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Empresa: {% if analysis.job.company %}{{ analysis.job.company }}{% else %}N/A{% endif %}</p>
+                        {% if analysis.score %}
+                        <div class="mb-4">
+                            <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
+                                <span>Compatibilidade</span>
+                                <span>{{ analysis.score }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div class="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full" style="width: {{ analysis.score }}%"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="flex space-x-3">
+                            <a href="{% url 'analysis_detail' analysis.id %}" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-center py-2 px-4 rounded-xl transition-colors duration-300">
+                                Ver análise
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <svg class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    <p class="mt-4 text-lg text-gray-600 dark:text-gray-400">Nenhuma análise encontrada.</p>
+                    <a href="{% url 'create_analysis' %}" class="mt-6 inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl transition-all duration-300 transform hover:scale-105">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Nova análise
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

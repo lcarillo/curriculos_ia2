@@ -6,7 +6,7 @@ import os
 from .models import Resume
 from .forms import ResumeUploadForm
 from .services.resume_parser import parse_resume
-
+from .models import Resume
 
 @login_required
 def upload_resume(request):
@@ -56,3 +56,8 @@ def resume_detail(request, resume_id):
     except Resume.DoesNotExist:
         messages.error(request, 'Currículo não encontrado.')
         return redirect('dashboard')
+
+@login_required
+def resume_list(request):
+    resumes = Resume.objects.filter(user=request.user)
+    return render(request, 'resumes/list.html', {'resumes': resumes})

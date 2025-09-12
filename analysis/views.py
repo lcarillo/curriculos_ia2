@@ -9,7 +9,15 @@ from .forms import AnalysisForm
 from .services.deepseek_client import DeepSeekClient
 from .services.matcher import calculate_compatibility
 from .services.exporter import export_pdf, export_docx
+from .models import Analysis
 
+# ===== Arquivo: C:\Users\lcarillo\Desktop\curriculos_ia1\analysis\views.py =====
+
+@login_required
+def analysis_list(request):
+    """View para listar todas as análises do usuário"""
+    analyses = Analysis.objects.filter(user=request.user)
+    return render(request, 'analysis/list.html', {'analyses': analyses})
 
 @login_required
 def create_analysis(request):
