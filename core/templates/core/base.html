@@ -207,14 +207,13 @@
                         <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Contato</a></li>
                     </ul>
                 </div>
-
                 <div>
                     <h3 class="text-lg font-semibold mb-4">Suporte</h3>
                     <ul class="space-y-3">
-                        <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Centro de Ajuda</a></li>
-                        <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> FAQ</a></li>
+                        <li><a href="{% url 'help_center' %}" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Centro de Ajuda</a></li>
+                        <li><a href="{% url 'faq' %}" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> FAQ</a></li>
                         <li><a href="{% url 'terms' %}" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Termos de Uso</a></li>
-                        <li><a href="#" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Política de Privacidade</a></li>
+                        <li><a href="{% url 'privacy_policy' %}" class="footer-link text-gray-400 hover:text-white flex items-center"><i class="fas fa-chevron-right text-xs mr-2"></i> Política de Privacidade</a></li>
                     </ul>
                 </div>
             </div>

@@ -9,7 +9,8 @@ from .forms import AnalysisForm
 from .services.deepseek_client import DeepSeekClient
 from .services.matcher import calculate_compatibility
 from .services.exporter import export_pdf, export_docx
-from .models import Analysis
+from billing.models import Subscription  # Importar o modelo de assinatura
+
 
 # ===== Arquivo: C:\Users\lcarillo\Desktop\curriculos_ia1\analysis\views.py =====
 
@@ -19,9 +20,25 @@ def analysis_list(request):
     analyses = Analysis.objects.filter(user=request.user)
     return render(request, 'analysis/list.html', {'analyses': analyses})
 
+
 @login_required
 def create_analysis(request):
     """View para criar uma nova análise"""
+    # Verificar se usuário tem assinatura ativa ou ainda tem análises gratuitas disponíveis
+    max_free_analyses = 2
+    analyses_count = Analysis.objects.filter(user=request.user).count()
+
+    # Verificar se tem assinatura ativa
+    has_active_subscription = Subscription.objects.filter(
+        user=request.user,
+        status='active'
+    ).exists()
+
+    # Se não tem assinatura ativa e já atingiu o limite gratuito
+    if not has_active_subscription and analyses_count >= max_free_analyses:
+        messages.warning(request, 'Você atingiu o limite de análises gratuitas. Faça upgrade para continuar usando.')
+        return redirect('pricing')
+
     if request.method == 'POST':
         form = AnalysisForm(request.user, request.POST)
         if form.is_valid():
@@ -29,7 +46,7 @@ def create_analysis(request):
             analysis.user = request.user
             analysis.status = 'pending'
             analysis.save()
-            
+
             # Processar análise (em background ou sincrono)
             try:
                 process_analysis(analysis)
@@ -42,14 +59,17 @@ def create_analysis(request):
                 return redirect('create_analysis')
     else:
         form = AnalysisForm(request.user)
-    
+
     resumes = Resume.objects.filter(user=request.user, status='completed')
     jobs = JobPosting.objects.filter(user=request.user)
-    
+
     return render(request, 'analysis/create.html', {
         'form': form,
         'resumes': resumes,
-        'jobs': jobs
+        'jobs': jobs,
+        'analyses_count': analyses_count,
+        'max_free_analyses': max_free_analyses,
+        'has_active_subscription': has_active_subscription
     })
 
 
@@ -57,7 +77,7 @@ def create_analysis(request):
 def analysis_detail(request, analysis_id):
     """View para visualizar detalhes da análise"""
     analysis = get_object_or_404(Analysis, id=analysis_id, user=request.user)
-    
+
     if request.method == 'POST' and analysis.status == 'completed':
         # Exportar currículo otimizado
         format = request.POST.get('format')
@@ -68,7 +88,7 @@ def analysis_detail(request, analysis_id):
                 return export_docx(analysis.optimized_resume, f"curriculo_otimizado_{analysis.id}")
         except Exception as e:
             messages.error(request, f'Erro ao exportar: {str(e)}')
-    
+
     return render(request, 'analysis/detail.html', {'analysis': analysis})
 
 
@@ -76,12 +96,12 @@ def process_analysis(analysis):
     """Processa a análise de compatibilidade"""
     analysis.status = 'processing'
     analysis.save()
-    
+
     # Calcular compatibilidade
     metrics = calculate_compatibility(analysis.resume.extracted_data, analysis.job.parsed_data or {})
     analysis.metrics = metrics
     analysis.score = metrics.get('overall_score', 0)
-    
+
     # Gerar sugestões com IA
     deepseek = DeepSeekClient()
     suggestions = deepseek.generate_suggestions(
@@ -89,13 +109,13 @@ def process_analysis(analysis):
         analysis.job.parsed_data or {}
     )
     analysis.suggestions = suggestions
-    
+
     # Gerar currículo otimizado
     optimized_resume = deepseek.optimize_resume(
         analysis.resume.extracted_data,
         analysis.job.parsed_data or {}
     )
     analysis.optimized_resume = optimized_resume
-    
+
     analysis.status = 'completed'
     analysis.save()

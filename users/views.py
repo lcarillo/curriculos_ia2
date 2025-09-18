@@ -17,6 +17,12 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 
+# Importar modelos para estatísticas
+from resumes.models import Resume
+from jobs.models import JobPosting
+from analysis.models import Analysis
+from billing.models import Subscription
+
 from .forms import CustomUserCreationForm
 from .models import VerificationSession
 import secrets
@@ -236,7 +242,37 @@ def user_logout(request):
 
 @login_required
 def profile(request):
-    return render(request, 'users/profile.html', {'user': request.user})
+    # Obter estatísticas do usuário (igual ao dashboard)
+    resumes_count = Resume.objects.filter(user=request.user).count()
+    jobs_count = JobPosting.objects.filter(user=request.user).count()
+    analyses_count = Analysis.objects.filter(user=request.user).count()
+
+    # Verificar assinatura (igual ao dashboard)
+    has_active_subscription = False
+    subscription_plan = "Gratuito"
+    subscription_end = None
+    max_free_analyses = 2
+
+    # Buscar assinatura ativa do usuário
+    active_subscription = Subscription.objects.filter(user=request.user, status='active').first()
+
+    if active_subscription:
+        has_active_subscription = True
+        subscription_plan = active_subscription.plan.name
+        subscription_end = active_subscription.current_period_end
+
+    context = {
+        'user': request.user,
+        'resumes_count': resumes_count,
+        'jobs_count': jobs_count,
+        'analyses_count': analyses_count,
+        'has_active_subscription': has_active_subscription,
+        'subscription_plan': subscription_plan,
+        'subscription_end': subscription_end,
+        'max_free_analyses': max_free_analyses,
+    }
+
+    return render(request, 'users/profile.html', context)
 
 
 # Views personalizadas de redefinição de senha
