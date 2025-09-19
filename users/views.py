@@ -275,34 +275,22 @@ def profile(request):
     return render(request, 'users/profile.html', context)
 
 
-# Views personalizadas de redefinição de senha
-class CustomPasswordResetView(LoginRequiredMixin, PasswordResetView):
+# Views simplificadas de redefinição de senha
+class CustomPasswordResetView(PasswordResetView):
     template_name = 'users/password_reset.html'
     email_template_name = 'users/password_reset_email.html'
     success_url = reverse_lazy('password_reset_done')
 
     def get_initial(self):
-        """Preenche o email com o email do usuário logado"""
         initial = super().get_initial()
         if self.request.user.is_authenticated:
             initial['email'] = self.request.user.email
         return initial
 
-    def form_valid(self, form):
-        """Verifica se o email pertence ao usuário logado"""
-        email = form.cleaned_data['email']
-
-        # Se o usuário está logado e o email não é o dele
-        if self.request.user.is_authenticated and self.request.user.email != email:
-            form.add_error('email', 'Este email não pertence à sua conta.')
-            return self.form_invalid(form)
-
-        # Verifica se o email existe no sistema
-        if not User.objects.filter(email=email).exists():
-            form.add_error('email', 'Este email não está cadastrado em nossa base.')
-            return self.form_invalid(form)
-
-        return super().form_valid(form)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user'] = self.request.user
+        return context
 
 
 class CustomPasswordResetDoneView(PasswordResetDoneView):
