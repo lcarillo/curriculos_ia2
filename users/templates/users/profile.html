@@ -372,55 +372,171 @@
         const phoneInput = document.getElementById('phone');
         const profileForm = document.getElementById('profileForm');
 
-        // Função para habilitar a edição
+        // Função para aplicar máscara de telefone
+        function formatPhoneNumber(phone) {
+            // Remove tudo que não é dígito
+            const cleaned = phone.replace(/\D/g, '');
+
+            // Aplica a máscara: (XX) XXXXX-XXXX
+            if (cleaned.length === 11) {
+                return cleaned.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+            } else if (cleaned.length === 10) {
+                return cleaned.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+            }
+
+            // Retorna o valor original se não tiver o tamanho esperado
+            return phone;
+        }
+
+        // Aplicar máscara ao carregar a página
+        if (phoneInput.value) {
+            phoneInput.value = formatPhoneNumber(phoneInput.value);
+               }
+
+        // Função para validar URL
+        function isValidUrl(url) {
+            if (!url) return true; // Campo vazio é válido
+            try {
+                new URL(url);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Função para habilitar edição
         function enableEditing() {
             linkedinInput.disabled = false;
             websiteInput.disabled = false;
             phoneInput.disabled = false;
 
-            // Estilizar os campos editáveis
-            [linkedinInput, websiteInput, phoneInput].forEach(input => {
-                input.classList.remove('bg-gray-50', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
-                input.classList.add('bg-white', 'dark:bg-gray-600', 'text-gray-900', 'dark:text-white', 'border-blue-400', 'dark:border-blue-500');
-            });
+            linkedinInput.classList.remove('bg-gray-50', 'dark:bg-gray-700');
+            websiteInput.classList.remove('bg-gray-50', 'dark:bg-gray-700');
+            phoneInput.classList.remove('bg-gray-50', 'dark:bg-gray-700');
+
+            linkedinInput.classList.add('bg-white', 'dark:bg-gray-600');
+            websiteInput.classList.add('bg-white', 'dark:bg-gray-600');
+            phoneInput.classList.add('bg-white', 'dark:bg-gray-600');
 
             saveButtons.style.display = 'flex';
             editButton.style.display = 'none';
-
-            // Focar no primeiro campo editável
-            phoneInput.focus();
         }
 
-        // Função para desabilitar a edição
+        // Função para desabilitar edição
         function disableEditing() {
             linkedinInput.disabled = true;
             websiteInput.disabled = true;
             phoneInput.disabled = true;
 
-            // Remover estilos de edição
-            [linkedinInput, websiteInput, phoneInput].forEach(input => {
-                input.classList.remove('bg-white', 'dark:bg-gray-600', 'text-gray-900', 'dark:text-white', 'border-blue-400', 'dark:border-blue-500');
-                input.classList.add('bg-gray-50', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
-            });
+            linkedinInput.classList.remove('bg-white', 'dark:bg-gray-600');
+            websiteInput.classList.remove('bg-white', 'dark:bg-gray-600');
+            phoneInput.classList.remove('bg-white', 'dark:bg-gray-600');
+
+            linkedinInput.classList.add('bg-gray-50', 'dark:bg-gray-700');
+            websiteInput.classList.add('bg-gray-50', 'dark:bg-gray-700');
+            phoneInput.classList.add('bg-gray-50', 'dark:bg-gray-700');
 
             saveButtons.style.display = 'none';
-            editButton.style.display = 'block';
+            editButton.style.display = 'flex';
         }
 
-        // Event listeners
+        // Event listener para o botão de editar
         editButton.addEventListener('click', enableEditing);
 
+        // Event listener para o botão de cancelar
         cancelButton.addEventListener('click', function() {
+            // Restaurar valores originais
+            linkedinInput.value = "{{ user.profile.linkedin_url|default:'' }}";
+            websiteInput.value = "{{ user.profile.website_url|default:'' }}";
+            phoneInput.value = "{{ user.profile.phone }}";
+
+            // Aplicar máscara novamente
+            if (phoneInput.value) {
+                phoneInput.value = formatPhoneNumber(phoneInput.value);
+            }
+
             disableEditing();
-            // Recarregar a página para descartar alterações
-            location.reload();
         });
 
-        // Impedir que o formulário seja submetido se os campos estiverem desabilitados
-        profileForm.addEventListener('submit', function(e) {
-            if (linkedinInput.disabled || websiteInput.disabled || phoneInput.disabled) {
-                e.preventDefault();
+        // Event listener para formatação de telefone em tempo real
+        phoneInput.addEventListener('input', function(e) {
+            // Remove tudo que não é dígito
+            const input = e.target.value.replace(/\D/g, '');
+
+            // Limita a 11 dígitos
+            const trimmed = input.slice(0, 11);
+
+            // Aplica a máscara
+            if (trimmed.length > 10) {
+                e.target.value = trimmed.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+            } else if (trimmed.length > 6) {
+                e.target.value = trimmed.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+            } else if (trimmed.length > 2) {
+                e.target.value = trimmed.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+            } else {
+                e.target.value = trimmed;
             }
+        });
+
+        // Validação do formulário antes de enviar
+        profileForm.addEventListener('submit', function(e) {
+            let isValid = true;
+
+            // Validar LinkedIn URL
+            if (linkedinInput.value && !isValidUrl(linkedinInput.value)) {
+                isValid = false;
+                linkedinInput.classList.add('border-red-500');
+                alert('Por favor, insira uma URL válida para o LinkedIn.');
+            } else {
+                linkedinInput.classList.remove('border-red-500');
+            }
+
+            // Validar Website URL
+            if (websiteInput.value && !isValidUrl(websiteInput.value)) {
+                isValid = false;
+                websiteInput.classList.add('border-red-500');
+                alert('Por favor, insira uma URL válida para o Website.');
+            } else {
+                websiteInput.classList.remove('border-red-500');
+            }
+
+            // Validar Telefone (mínimo 10 dígitos)
+            const phoneDigits = phoneInput.value.replace(/\D/g, '');
+            if (phoneInput.value && phoneDigits.length < 10) {
+                isValid = false;
+                phoneInput.classList.add('border-red-500');
+                alert('Por favor, insira um número de telefone válido com DDD.');
+            } else {
+                phoneInput.classList.remove('border-red-500');
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+            } else {
+                // Formatar telefone antes de enviar
+                phoneInput.value = phoneDigits;
+            }
+        });
+
+        // Adicionar placeholders dinâmicos para validação visual
+        linkedinInput.addEventListener('focus', function() {
+            if (!this.value) {
+                this.placeholder = 'https://linkedin.com/in/seu-perfil';
+            }
+        });
+
+        linkedinInput.addEventListener('blur', function() {
+            this.placeholder = '';
+        });
+
+        websiteInput.addEventListener('focus', function() {
+            if (!this.value) {
+                this.placeholder = 'https://seu-site.com';
+            }
+        });
+
+        websiteInput.addEventListener('blur', function() {
+            this.placeholder = '';
         });
     });
 </script>

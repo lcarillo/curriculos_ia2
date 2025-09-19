@@ -62,9 +62,9 @@ class UserUpdateForm(UserChangeForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['phone', 'linkedin_url', 'website_url']
+        fields = [ 'linkedin_url', 'website_url']
         widgets = {
-            'phone': forms.TextInput(attrs={'class': 'form-input', 'disabled': 'disabled'}),
+
             'linkedin_url': forms.URLInput(attrs={'class': 'form-input', 'disabled': 'disabled',
                                                   'placeholder': 'https://linkedin.com/in/seu-perfil'}),
             'website_url': forms.URLInput(
