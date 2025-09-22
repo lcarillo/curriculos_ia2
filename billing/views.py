@@ -74,22 +74,28 @@ def cancel(request):
 def billing_portal(request):
     """View para portal de billing do Stripe"""
     try:
-        if hasattr(request.user, 'subscription') and request.user.subscription.stripe_customer_id:
-            # URL dinâmica baseada no domínio atual
-            return_url = request.build_absolute_uri(reverse('dashboard'))
+        # Corrigir a verificação da assinatura
+        try:
+            subscription = Subscription.objects.get(user=request.user, status='active')
+            if subscription.stripe_customer_id:
+                # URL dinâmica baseada no domínio atual
+                return_url = request.build_absolute_uri(reverse('dashboard'))
 
-            session = create_billing_portal_session(
-                request.user.subscription.stripe_customer_id,
-                return_url
-            )
-            return redirect(session.url)
-        else:
-            messages.error(request, 'Nenhuma assinatura encontrada.')
+                session = create_billing_portal_session(
+                    subscription.stripe_customer_id,
+                    return_url
+                )
+                return redirect(session.url)
+            else:
+                messages.error(request, 'Cliente Stripe não encontrado.')
+                return redirect('dashboard')
+        except Subscription.DoesNotExist:
+            messages.error(request, 'Nenhuma assinatura ativa encontrada.')
             return redirect('dashboard')
+
     except Exception as e:
         messages.error(request, f'Erro ao acessar portal de billing: {str(e)}')
         return redirect('dashboard')
-
 
 @csrf_exempt
 def stripe_webhook(request):
@@ -243,3 +249,46 @@ def handle_invoice_event(invoice, event_type):
     """Processar eventos de fatura"""
     print(f"🧾 Evento de fatura: {event_type}, ID: {invoice.get('id')}")
     # Você pode adicionar lógica adicional para processar faturas aqui
+
+
+@login_required
+def cancel_subscription(request):
+    """View para cancelar assinatura diretamente no Stripe"""
+    try:
+        # Corrigir a verificação da assinatura
+        try:
+            subscription = Subscription.objects.get(user=request.user, status='active')
+        except Subscription.DoesNotExist:
+            messages.error(request, 'Nenhuma assinatura ativa encontrada.')
+            return redirect('profile')
+
+        if subscription.status != 'active':
+            messages.warning(request, 'Sua assinatura já está cancelada ou inativa.')
+            return redirect('profile')
+
+        # Usar a função get_stripe_client corretamente
+        stripe_api = get_stripe_client()
+
+        # Cancelar assinatura no Stripe
+        canceled_subscription = stripe_api.Subscription.delete(
+            subscription.stripe_subscription_id
+        )
+
+        # Atualizar status no banco de dados
+        subscription.status = 'canceled'
+        subscription.save()
+
+        # Log do evento
+        print(f"✅ Assinatura cancelada: {subscription.stripe_subscription_id} para usuário {request.user.username}")
+
+        messages.success(request,
+                         'Assinatura cancelada com sucesso! Seu acesso aos recursos premium será mantido até o final do período atual.')
+
+    except stripe.error.StripeError as e:
+        print(f"❌ Erro do Stripe ao cancelar assinatura: {e}")
+        messages.error(request, f'Erro ao cancelar assinatura: {str(e)}')
+    except Exception as e:
+        print(f"❌ Erro geral ao cancelar assinatura: {e}")
+        messages.error(request, 'Erro interno ao processar cancelamento. Tente novamente.')
+
+    return redirect('profile')
