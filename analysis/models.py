@@ -20,10 +20,10 @@ class Analysis(models.Model):
     ])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ['-created_at']
         verbose_name_plural = 'Analyses'
-    
+
     def __str__(self):
         return f"Analysis: {self.resume.file_name} ↔ {self.job.title}"

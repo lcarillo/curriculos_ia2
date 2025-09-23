@@ -167,7 +167,10 @@ STRIPE_PRICE_MONTHLY = os.environ.get('STRIPE_PRICE_MONTHLY', '')
 DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY', '')
 DEEPSEEK_API_BASE = os.environ.get('DEEPSEEK_API_BASE', 'https://api.deepseek.com/v1')
 DEEPSEEK_MODEL = os.environ.get('DEEPSEEK_MODEL', 'deepseek-chat')
-
+DEEPSEEK_TIMEOUT = 60.0
+DEEPSEEK_MAX_TOKENS = 4000
+print(f"🔧 DeepSeek Config: API_KEY present = {bool(os.environ.get('DEEPSEEK_API_KEY'))}")
+print(f"🔧 DeepSeek Config: Using stub mode = {not os.environ.get('DEEPSEEK_API_KEY')}")
 # BASE URL para produção
 BASE_URL = os.environ.get('BASE_URL', 'http://localhost:8000')
 
@@ -209,3 +212,36 @@ LOGGING = {
         'level': 'WARNING',
     },
 }
+
+# ===== Arquivo: curriculos_ia1/settings.py =====
+# Adicionar estas configurações
+
+# Configurações Redis para cache
+REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
+REDIS_PORT = int(os.environ.get('REDIS_PORT', 6379))
+REDIS_DB = int(os.environ.get('REDIS_DB', 0))
+
+# Cache configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+
+# Internacionalização
+LANGUAGE_CODE = 'pt-br'
+TIME_ZONE = 'America/Sao_Paulo'
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
+
+# Idiomas suportados
+LANGUAGES = [
+    ('pt', 'Português'),
+    ('en', 'English'),
+    ('es', 'Español'),
+]

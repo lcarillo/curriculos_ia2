@@ -20,7 +20,7 @@ class AnalysisModelTest(TestCase):
             title='Test Job',
             description='Test Description'
         )
-    
+
     def test_create_analysis(self):
         analysis = Analysis.objects.create(
             user=self.user,

@@ -19,13 +19,12 @@ def export_pdf(resume_text: str, filename: str) -> HttpResponse:
     doc = SimpleDocTemplate(buffer, pagesize=letter)
     styles = getSampleStyleSheet()
 
-    # Custom styles
     title_style = ParagraphStyle(
         'Title',
         parent=styles['Heading1'],
         fontSize=16,
         spaceAfter=30,
-        alignment=1  # Center
+        alignment=1
     )
 
     heading_style = ParagraphStyle(
@@ -38,7 +37,6 @@ def export_pdf(resume_text: str, filename: str) -> HttpResponse:
 
     normal_style = styles['Normal']
 
-    # Parse the resume text and create story
     story = []
     lines = resume_text.split('\n')
 
@@ -47,9 +45,9 @@ def export_pdf(resume_text: str, filename: str) -> HttpResponse:
         if not line:
             continue
 
-        if line.isupper() and len(line) < 50:  # Likely a title
+        if line.isupper() and len(line) < 50:
             story.append(Paragraph(line, title_style))
-        elif line.endswith(':'):  # Likely a section header
+        elif line.endswith(':'):
             story.append(Paragraph(line[:-1], heading_style))
         else:
             story.append(Paragraph(line, normal_style))
@@ -78,13 +76,13 @@ def export_docx(resume_text: str, filename: str) -> HttpResponse:
         if not line:
             continue
 
-        if line.isupper() and len(line) < 50:  # Title
+        if line.isupper() and len(line) < 50:
             p = doc.add_paragraph()
             run = p.add_run(line)
             run.bold = True
             run.font.size = Pt(16)
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        elif line.endswith(':'):  # Section header
+        elif line.endswith(':'):
             p = doc.add_paragraph()
             run = p.add_run(line[:-1])
             run.bold = True
@@ -93,7 +91,6 @@ def export_docx(resume_text: str, filename: str) -> HttpResponse:
             p = doc.add_paragraph(line)
             p.paragraph_format.space_after = Pt(8)
 
-    # Save to buffer
     buffer = BytesIO()
     doc.save(buffer)
     buffer.seek(0)
@@ -102,3 +99,4 @@ def export_docx(resume_text: str, filename: str) -> HttpResponse:
     buffer.close()
 
     return response
+
