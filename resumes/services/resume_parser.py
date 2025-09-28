@@ -5,6 +5,8 @@ import re
 import logging
 from typing import Dict, Any, List, Tuple
 from difflib import SequenceMatcher
+import dateutil.parser as dparser
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -14,9 +16,10 @@ class AdvancedResumeParser:
         self.skills_database = self._load_comprehensive_skills_database()
         self.language_patterns = self._load_language_patterns()
         self.education_keywords = self._load_education_keywords()
+        self.experience_keywords = self._load_experience_keywords()
 
     def _load_comprehensive_skills_database(self) -> Dict[str, List[str]]:
-        """Banco de habilidades extremamente abrangente"""
+        """Banco de habilidades extremamente abrangente e atualizado"""
         return {
             'technology': [
                 'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'php', 'ruby', 'swift', 'kotlin',
@@ -85,6 +88,24 @@ class AdvancedResumeParser:
                 'eficiência operacional', 'automação de processos', 'otimização de recursos'
             ],
 
+            'marketing': [
+                'marketing digital', 'seo', 'sem', 'google ads', 'facebook ads', 'instagram ads',
+                'google analytics', 'redes sociais', 'social media', 'copywriting', 'e-mail marketing',
+                'content marketing', 'inbound marketing', 'outbound marketing', 'branding',
+                'publicidade', 'comunicação', 'mídia paga', 'analytics', 'kpi', 'roi',
+                'gestão de tráfego', 'campanhas digitais', 'marketing de conteúdo', 'lead generation',
+                'conversão', 'funil de vendas', 'customer journey', 'personas', 'segmentação',
+                'engajamento', 'orgânico', 'paid media', 'metas', 'estratégia de marketing',
+                'planejamento estratégico', 'pesquisa de mercado', 'competitive analysis',
+                'brand awareness', 'crm', 'marketing automation', 'salesforce', 'hubspot'
+            ],
+
+            'sales': [
+                'vendas', 'sales', 'negociação', 'prospecção', 'fechamento', 'funil de vendas',
+                'gestão de carteira', 'relacionamento com cliente', 'customer success',
+                'metas comerciais', 'apresentação comercial', 'proposta comercial'
+            ],
+
             'languages': [
                 'portuguese', 'english', 'spanish', 'french', 'german', 'italian', 'mandarin',
                 'japanese', 'korean', 'russian', 'arabic', 'hindi'
@@ -92,37 +113,54 @@ class AdvancedResumeParser:
         }
 
     def _load_language_patterns(self) -> Dict[str, Dict[str, Any]]:
-        """Padrões de regex para múltiplos idiomas"""
+        """Padrões de regex para múltiplos idiomas - expandido"""
         return {
             'pt': {
                 'name': r'^([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)+)$',
                 'email': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
                 'phone': r'(\+55\s?)?(\(?\d{2}\)?[\s-]?)?(\d{4,5}[\s-]?\d{4})',
                 'education_keywords': ['formação', 'educação', 'acadêmico', 'graduação', 'mestrado', 'doutorado',
-                                       'curso', 'faculdade', 'universidade', 'especialização', 'MBA', 'bacharel'],
+                                       'curso', 'faculdade', 'universidade', 'especialização', 'MBA', 'bacharel',
+                                       'ensino', 'acadêmica', 'escolaridade', 'formação acadêmica'],
                 'experience_keywords': ['experiência', 'profissional', 'empresa', 'trabalho', 'cargo', 'emprego',
-                                        'atuação', 'carreira', 'profissão'],
-                'skill_keywords': ['habilidades', 'competências', 'conhecimentos', 'skills', 'capacidades'],
+                                        'atuação', 'carreira', 'profissão', 'experiencia', 'histórico profissional',
+                                        'histórico de trabalho', 'histórico de emprego', 'experiências profissionais'],
+                'skill_keywords': ['habilidades', 'competências', 'conhecimentos', 'skills', 'capacidades',
+                                   'ferramentas', 'tecnologias', 'qualificações'],
+                'summary_keywords': ['resumo', 'perfil', 'objetivo', 'sobre', 'profile', 'summary'],
+                'language_keywords': ['idiomas', 'línguas', 'idioma', 'língua'],
+                'certification_keywords': ['certificações', 'cursos', 'certificados', 'certificado', 'certificação'],
             },
             'en': {
                 'name': r'^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)$',
                 'email': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
                 'phone': r'(\+1\s?)?(\(?\d{3}\)?[\s-]?)?(\d{3}[\s-]?\d{4})',
                 'education_keywords': ['education', 'academic', 'degree', 'graduation', 'master', 'phd',
-                                       'course', 'college', 'university', 'specialization', 'MBA', 'bachelor'],
+                                       'course', 'college', 'university', 'specialization', 'MBA', 'bachelor',
+                                       'studies', 'academic background', 'qualifications'],
                 'experience_keywords': ['experience', 'professional', 'company', 'work', 'job', 'employment',
-                                        'career', 'occupation'],
-                'skill_keywords': ['skills', 'competencies', 'knowledge', 'abilities', 'capabilities'],
+                                        'career', 'occupation', 'work experience', 'employment history',
+                                        'professional experience'],
+                'skill_keywords': ['skills', 'competencies', 'knowledge', 'abilities', 'capabilities',
+                                   'tools', 'technologies', 'qualifications'],
+                'summary_keywords': ['summary', 'profile', 'objective', 'about', 'professional summary'],
+                'language_keywords': ['languages', 'language'],
+                'certification_keywords': ['certifications', 'courses', 'certificates', 'certification'],
             },
             'es': {
                 'name': r'^([A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)+)$',
                 'email': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
                 'phone': r'(\+34\s?)?(\(?\d{2}\)?[\s-]?)?(\d{4}[\s-]?\d{3})',
                 'education_keywords': ['formación', 'educación', 'académico', 'grado', 'master', 'doctorado',
-                                       'curso', 'facultad', 'universidad', 'especialización', 'MBA', 'bachiller'],
+                                       'curso', 'facultad', 'universidad', 'especialización', 'MBA', 'bachiller',
+                                       'estudios', 'formación académica'],
                 'experience_keywords': ['experiencia', 'profesional', 'empresa', 'trabajo', 'cargo', 'empleo',
-                                        'carrera', 'ocupación'],
-                'skill_keywords': ['habilidades', 'competencias', 'conocimientos', 'capacidades'],
+                                        'carrera', 'ocupación', 'experiencia laboral', 'historial laboral'],
+                'skill_keywords': ['habilidades', 'competencias', 'conocimientos', 'capacidades',
+                                   'herramientas', 'tecnologías', 'cualificaciones'],
+                'summary_keywords': ['resumen', 'perfil', 'objetivo', 'sobre'],
+                'language_keywords': ['idiomas', 'lenguas', 'idioma', 'lengua'],
+                'certification_keywords': ['certificaciones', 'cursos', 'certificados', 'certificación'],
             }
         }
 
@@ -132,7 +170,17 @@ class AdvancedResumeParser:
             'education', 'academic', 'degree', 'graduation', 'master', 'phd', 'course', 'college',
             'university', 'specialization', 'mba', 'bachelor', 'licentiate', 'doctorate',
             'formação', 'acadêmico', 'graduação', 'mestrado', 'doutorado', 'curso', 'faculdade',
-            'universidade', 'especialização', 'bacharel', 'licenciatura', 'pós-graduação'
+            'universidade', 'especialização', 'bacharel', 'licenciatura', 'pós-graduação',
+            'formación', 'educación', 'grado', 'master', 'doctorado', 'facultad', 'universidad'
+        ]
+
+    def _load_experience_keywords(self) -> List[str]:
+        """Palavras-chave para identificar seção de experiência"""
+        return [
+            'experience', 'professional', 'company', 'work', 'job', 'employment', 'career',
+            'occupation', 'work experience', 'employment history', 'professional experience',
+            'experiência', 'profissional', 'empresa', 'trabalho', 'cargo', 'emprego', 'carreira',
+            'experiencia', 'profesional', 'trabajo', 'empleo', 'carrera'
         ]
 
     def detect_language(self, text: str) -> str:
@@ -159,9 +207,10 @@ class AdvancedResumeParser:
 
         # Verifica padrões específicos
         for lang, patterns in self.language_patterns.items():
-            for keyword in patterns['education_keywords']:
-                if keyword in text_lower:
-                    scores[lang] += 2
+            for keyword_category in ['education_keywords', 'experience_keywords']:
+                for keyword in patterns[keyword_category]:
+                    if keyword in text_lower:
+                        scores[lang] += 2
 
         return max(scores.items(), key=lambda x: x[1])[0] if max(scores.values()) > 0 else 'en'
 
@@ -225,6 +274,8 @@ class AdvancedResumeParser:
             'skills': self._extract_skills_advanced(text, language),
             'languages': self._extract_languages_advanced(text, language),
             'certifications': self._extract_certifications_advanced(text, language),
+            'projects': self._extract_projects_advanced(text, language),
+            'soft_skills': self._extract_soft_skills_advanced(text, language),
             'summary': self._extract_summary_advanced(lines, patterns, language),
             'raw_text': text,
             'detected_language': language,
@@ -234,10 +285,8 @@ class AdvancedResumeParser:
         return info
 
     def _extract_personal_info_advanced(self, lines: List[str], patterns: Dict, language: str) -> Dict[str, str]:
-        """Extrai informações pessoais com técnicas avançadas - CORRIGIDA"""
+        """Extrai informações pessoais com técnicas avançadas"""
         personal_info = {}
-
-        # Procura primeiro por padrões específicos de contato
         full_text = ' '.join(lines)
 
         # Extrai email
@@ -251,61 +300,69 @@ class AdvancedResumeParser:
             personal_info['phone'] = phone_match.group(0)
 
         # Procura LinkedIn
-        linkedin_pattern = r'linkedin\.com/in/[a-zA-Z0-9\-]+'
-        linkedin_match = re.search(linkedin_pattern, full_text)
-        if linkedin_match:
-            personal_info['linkedin'] = 'https://' + linkedin_match.group(0)
+        linkedin_patterns = [
+            r'linkedin\.com/in/[a-zA-Z0-9\-]+',
+            r'linkedin\.com/[a-zA-Z0-9\-]+',
+            r'linkedin/[a-zA-Z0-9\-]+'
+        ]
+        for pattern in linkedin_patterns:
+            linkedin_match = re.search(pattern, full_text.lower())
+            if linkedin_match:
+                linkedin_url = linkedin_match.group(0)
+                if not linkedin_url.startswith('http'):
+                    linkedin_url = 'https://' + linkedin_url
+                personal_info['linkedin'] = linkedin_url
+                break
 
-        # Procura nome (geralmente nas primeiras linhas, após remover contatos)
-        for i, line in enumerate(lines[:10]):
+        # Procura nome (abordagem mais robusta)
+        for i, line in enumerate(lines[:8]):  # Verifica primeiras 8 linhas
+            clean_line = line.strip()
+
             # Remove informações de contato já encontradas
-            clean_line = line
             if 'email' in personal_info:
                 clean_line = clean_line.replace(personal_info['email'], '')
             if 'phone' in personal_info:
                 clean_line = clean_line.replace(personal_info['phone'], '')
 
-            # Verifica se é um nome válido
-            if (re.match(patterns['name'], clean_line.strip()) and
-                    len(clean_line.strip().split()) >= 2 and
-                    len(clean_line.strip()) > 5):
-                personal_info['name'] = clean_line.strip()
+            # Verifica se é um nome válido (pelo menos 2 palavras, cada uma com inicial maiúscula)
+            words = clean_line.split()
+            if (len(words) >= 2 and
+                    all(len(word) > 1 and word[0].isupper() for word in words if word) and
+                    len(clean_line) > 5 and len(clean_line) < 100 and
+                    not any(keyword in clean_line.lower() for keyword in
+                            patterns['education_keywords'] +
+                            patterns['experience_keywords'] +
+                            patterns['skill_keywords'])):
+                personal_info['name'] = clean_line
                 break
-
-        # Extrai localização (linhas iniciais que não são nome, email, telefone)
-        location_candidates = []
-        for i, line in enumerate(lines[:6]):
-            clean_line = line.strip()
-            # Remove informações já identificadas
-            if 'name' in personal_info and personal_info['name'] in clean_line:
-                clean_line = clean_line.replace(personal_info['name'], '')
-            if 'email' in personal_info and personal_info['email'] in clean_line:
-                clean_line = clean_line.replace(personal_info['email'], '')
-            if 'phone' in personal_info and personal_info['phone'] in clean_line:
-                clean_line = clean_line.replace(personal_info['phone'], '')
-
-            # Verifica se pode ser uma localização
-            if (clean_line and
-                    len(clean_line) > 3 and
-                    len(clean_line) < 100 and
-                    not re.match(patterns['email'], clean_line) and
-                    not re.match(patterns['phone'], clean_line) and
-                    ('name' not in personal_info or personal_info['name'] not in line)):
-                location_candidates.append(clean_line)
-
-        # Pega a primeira linha candidata como localização
-        if location_candidates:
-            personal_info['location'] = location_candidates[0]
 
         # Se não encontrou nome, tenta encontrar no texto completo
         if 'name' not in personal_info:
-            # Procura por padrões de nome em todo o texto
             words = full_text.split()
             for i in range(len(words) - 1):
                 potential_name = f"{words[i]} {words[i + 1]}"
                 if (re.match(patterns['name'], potential_name) and
-                        len(potential_name.split()) >= 2):
+                        len(potential_name.split()) >= 2 and
+                        len(potential_name) > 5):
                     personal_info['name'] = potential_name
+                    break
+
+        # Extrai localização
+        location_patterns = [
+            r'([A-Z][a-z]+(?:[\s-]+[A-Z][a-z]+)*\s*,\s*[A-Z]{2})',
+            r'([A-Z][a-z]+(?:[\s-]+[A-Z][a-z]+)*\s*-\s*[A-Z]{2})',
+            r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+        ]
+
+        for pattern in location_patterns:
+            location_match = re.search(pattern, full_text)
+            if location_match:
+                location = location_match.group(0).strip()
+                # Filtra localizações muito curtas ou que são nomes
+                if (len(location) > 3 and
+                        len(location) < 50 and
+                        ('name' not in personal_info or personal_info['name'] not in location)):
+                    personal_info['location'] = location
                     break
 
         return personal_info
@@ -323,42 +380,92 @@ class AdvancedResumeParser:
             # Detecta início da seção
             if any(keyword in line_lower for keyword in patterns['education_keywords']):
                 in_education_section = True
+                education_lines = []
                 continue
 
             if in_education_section:
                 # Para quando encontrar próxima seção principal
                 if any(keyword in line_lower for keyword in
-                       patterns['experience_keywords'] + patterns['skill_keywords'] + ['certificações',
-                                                                                       'certifications', 'idiomas',
-                                                                                       'languages']):
+                       patterns['experience_keywords'] + patterns['skill_keywords'] +
+                       ['certificações', 'certifications', 'idiomas', 'languages', 'habilidades', 'skills']):
                     break
 
-                if line.strip():
+                if line.strip() and len(line.strip()) > 5:
                     education_lines.append(line)
 
         # Processa as linhas de educação
-        current_item = None
+        current_item = {}
         for line in education_lines:
-            # Verifica se é um novo item de educação (contém datas)
-            date_pattern = r'\b(\d{4})\s*[-–]\s*(\d{4}|presente|atual)\b|\b(\w+\s+\d{4})\s*[-–]\s*(\w+\s+\d{4}|presente|atual)\b'
-            date_match = re.search(date_pattern, line, re.IGNORECASE)
+            # Tenta extrair informações estruturadas
+            education_item = self._parse_education_line(line, language)
+            if education_item:
+                education.append(education_item)
 
-            if date_match:
-                if current_item:
-                    education.append(current_item)
-                current_item = {
-                    'date': date_match.group(0),
-                    'description': re.sub(date_pattern, '', line).strip(),
-                    'type': 'education'
-                }
-            elif current_item:
-                # Continua a descrição do item atual
-                current_item['description'] += ' ' + line.strip()
-
-        if current_item:
-            education.append(current_item)
+        # Se não encontrou educação estruturada, tenta abordagem alternativa
+        if not education:
+            education = self._extract_education_fallback(education_lines, language)
 
         return education if education else [{'description': 'Educação não identificada', 'type': 'unknown'}]
+
+    def _parse_education_line(self, line: str, language: str) -> Dict:
+        """Analisa linha de educação extraindo informações estruturadas"""
+        # Padrões para datas
+        date_patterns = [
+            r'(\d{4})\s*[-–]\s*(\d{4}|presente|atual)',
+            r'(\d{4})\s*[-–]\s*(\d{4})',
+            r'(\w+\s+\d{4})\s*[-–]\s*(\w+\s+\d{4}|presente|atual)',
+        ]
+
+        line_clean = line.strip()
+
+        # Tenta encontrar instituições conhecidas
+        institutions = ['universidade', 'faculdade', 'college', 'university', 'escola', 'school', 'instituto']
+        institution_found = None
+        for inst in institutions:
+            if inst in line_clean.lower():
+                institution_found = inst
+                break
+
+        # Tenta encontrar curso
+        courses = ['bacharel', 'mestrado', 'doutorado', 'graduação', 'pós-graduação',
+                   'bachelor', 'master', 'phd', 'graduation', 'mba']
+        course_found = None
+        for course in courses:
+            if course in line_clean.lower():
+                course_found = course
+                break
+
+        # Extrai datas
+        start_date = end_date = None
+        for pattern in date_patterns:
+            date_match = re.search(pattern, line_clean, re.IGNORECASE)
+            if date_match:
+                start_date = date_match.group(1)
+                end_date = date_match.group(2) if date_match.group(2) not in ['presente', 'atual'] else 'Presente'
+                break
+
+        if line_clean and len(line_clean) > 10:
+            return {
+                'course': course_found or 'Curso não especificado',
+                'institution': institution_found or 'Instituição não especificada',
+                'description': line_clean,
+                'start_date': start_date,
+                'end_date': end_date,
+                'type': 'education'
+            }
+
+        return None
+
+    def _extract_education_fallback(self, lines: List[str], language: str) -> List[Dict]:
+        """Método alternativo para extrair educação quando o principal falha"""
+        education = []
+        for line in lines:
+            if len(line.strip()) > 20:  # Linhas muito curtas provavelmente não são educação
+                education.append({
+                    'description': line.strip(),
+                    'type': 'education'
+                })
+        return education
 
     def _extract_experience_advanced(self, lines: List[str], patterns: Dict, language: str) -> List[Dict]:
         """Extrai seção de experiência profissional com maior precisão"""
@@ -373,41 +480,97 @@ class AdvancedResumeParser:
             # Detecta início da seção
             if any(keyword in line_lower for keyword in patterns['experience_keywords']):
                 in_experience_section = True
+                experience_lines = []
                 continue
 
             if in_experience_section:
                 # Para quando encontrar próxima seção principal
                 if any(keyword in line_lower for keyword in
-                       patterns['education_keywords'] + patterns['skill_keywords'] + ['habilidades', 'skills',
-                                                                                      'formação', 'education']):
+                       patterns['education_keywords'] + patterns['skill_keywords'] +
+                       ['formação', 'education', 'habilidades', 'skills']):
                     break
 
-                if line.strip():
+                if line.strip() and len(line.strip()) > 5:
                     experience_lines.append(line)
 
         # Processa as linhas de experiência
-        current_item = None
+        current_item = {}
         for line in experience_lines:
-            # Verifica se é um novo item de experiência (contém datas)
-            date_pattern = r'\b(\d{4})\s*[-–]\s*(\d{4}|presente|atual)\b|\b(\w+\s+\d{4})\s*[-–]\s*(\w+\s+\d{4}|presente|atual)\b'
-            date_match = re.search(date_pattern, line, re.IGNORECASE)
+            # Tenta extrair informações estruturadas
+            experience_item = self._parse_experience_line(line, language)
+            if experience_item:
+                experience.append(experience_item)
 
-            if date_match:
-                if current_item:
-                    experience.append(current_item)
-                current_item = {
-                    'date': date_match.group(0),
-                    'description': re.sub(date_pattern, '', line).strip(),
-                    'type': 'experience'
-                }
-            elif current_item:
-                # Continua a descrição do item atual
-                current_item['description'] += ' ' + line.strip()
-
-        if current_item:
-            experience.append(current_item)
+        # Se não encontrou experiência estruturada, tenta abordagem alternativa
+        if not experience:
+            experience = self._extract_experience_fallback(experience_lines, language)
 
         return experience if experience else [{'description': 'Experiência não identificada', 'type': 'unknown'}]
+
+    def _parse_experience_line(self, line: str, language: str) -> Dict:
+        """Analisa linha de experiência extraindo informações estruturadas"""
+        line_clean = line.strip()
+
+        # Padrões para datas
+        date_patterns = [
+            r'(\d{4})\s*[-–]\s*(\d{4}|presente|atual)',
+            r'(\d{4})\s*[-–]\s*(\d{4})',
+            r'(\w+\s+\d{4})\s*[-–]\s*(\w+\s+\d{4}|presente|atual)',
+        ]
+
+        # Tenta extrair cargo e empresa
+        position_company_pattern = r'([^-–]+?)\s*[-–]\s*(.+)'
+        position_company_match = re.search(position_company_pattern, line_clean)
+
+        position = None
+        company = None
+
+        if position_company_match:
+            position = position_company_match.group(1).strip()
+            company = position_company_match.group(2).strip()
+        else:
+            # Se não encontrou padrão de traço, tenta encontrar palavras-chave
+            position_keywords = ['analista', 'coordenador', 'gerente', 'diretor', 'supervisor',
+                                 'consultor', 'especialista', 'assistente', 'estagiário']
+            for keyword in position_keywords:
+                if keyword in line_clean.lower():
+                    position = keyword.capitalize()
+                    break
+
+        # Extrai datas
+        start_date = end_date = None
+        for pattern in date_patterns:
+            date_match = re.search(pattern, line_clean, re.IGNORECASE)
+            if date_match:
+                start_date = date_match.group(1)
+                end_date = date_match.group(2) if date_match.group(2) not in ['presente', 'atual'] else 'Presente'
+                # Remove as datas da descrição
+                line_clean = re.sub(pattern, '', line_clean).strip()
+                break
+
+        if line_clean and len(line_clean) > 10:
+            return {
+                'position': position or 'Cargo não especificado',
+                'company': company or 'Empresa não especificada',
+                'description': line_clean,
+                'start_date': start_date,
+                'end_date': end_date,
+                'current': end_date in ['Presente', 'presente', 'atual', 'Atual'],
+                'type': 'experience'
+            }
+
+        return None
+
+    def _extract_experience_fallback(self, lines: List[str], language: str) -> List[Dict]:
+        """Método alternativo para extrair experiência quando o principal falha"""
+        experience = []
+        for line in lines:
+            if len(line.strip()) > 25:  # Linhas muito curtas provavelmente não são experiência relevante
+                experience.append({
+                    'description': line.strip(),
+                    'type': 'experience'
+                })
+        return experience
 
     def _extract_skills_advanced(self, text: str, language: str) -> List[Dict]:
         """Extrai habilidades com matching avançado"""
@@ -421,44 +584,89 @@ class AdvancedResumeParser:
 
                 for variation in skill_variations:
                     if variation.lower() in text_lower:
-                        skills.append({
-                            'name': skill,
-                            'area': area,
-                            'variation_found': variation,
-                            'confidence': self._calculate_skill_confidence_advanced(text, variation)
-                        })
-                        break  # Evita duplicatas
+                        # Verifica se não é um falso positivo
+                        if self._is_valid_skill_context(text, variation):
+                            skills.append({
+                                'name': skill,
+                                'area': area,
+                                'variation_found': variation,
+                                'confidence': self._calculate_skill_confidence_advanced(text, variation)
+                            })
+                            break  # Evita duplicatas
 
-        return skills
+        # Remove duplicatas
+        unique_skills = []
+        seen_skills = set()
+        for skill in skills:
+            skill_key = skill['name'].lower()
+            if skill_key not in seen_skills:
+                unique_skills.append(skill)
+                seen_skills.add(skill_key)
+
+        return unique_skills
 
     def _get_skill_variations_advanced(self, skill: str, language: str) -> List[str]:
         """Retorna variações de skill por idioma"""
         variations_map = {
             'project management': {
-                'pt': ['gestão de projetos', 'gerenciamento de projetos'],
+                'pt': ['gestão de projetos', 'gerenciamento de projetos', 'gestao de projetos'],
                 'es': ['gestión de proyectos'],
-                'en': ['project management']
+                'en': ['project management', 'project manager']
             },
             'team leadership': {
-                'pt': ['liderança de equipe', 'liderança de time'],
+                'pt': ['liderança de equipe', 'liderança de time', 'gestão de equipe'],
                 'es': ['liderazgo de equipo'],
-                'en': ['team leadership', 'leadership']
+                'en': ['team leadership', 'leadership', 'team lead']
             },
             'data science': {
-                'pt': ['ciência de dados', 'data science'],
+                'pt': ['ciência de dados', 'data science', 'ciencia de dados'],
                 'es': ['ciencia de datos'],
                 'en': ['data science']
             },
             'machine learning': {
-                'pt': ['aprendizado de máquina', 'machine learning'],
+                'pt': ['aprendizado de máquina', 'machine learning', 'aprendizado de maquina'],
                 'es': ['aprendizaje automático'],
-                'en': ['machine learning']
+                'en': ['machine learning', 'ml']
+            },
+            'seo': {
+                'pt': ['seo', 'search engine optimization', 'otimização de sites'],
+                'es': ['seo', 'optimización de motores de búsqueda'],
+                'en': ['seo', 'search engine optimization']
+            },
+            'google analytics': {
+                'pt': ['google analytics', 'analytics'],
+                'es': ['google analytics'],
+                'en': ['google analytics', 'analytics']
             }
         }
 
         if skill in variations_map:
             return variations_map[skill].get(language, [skill])
         return [skill]
+
+    def _is_valid_skill_context(self, text: str, skill: str) -> bool:
+        """Verifica se a skill está em contexto válido"""
+        # Contextos que indicam que é realmente uma skill
+        valid_contexts = [
+            f'experiência em {skill}',
+            f'conhecimento em {skill}',
+            f'domínio de {skill}',
+            f'proficiente em {skill}',
+            f'habilidade em {skill}',
+            f'skills in {skill}',
+            f'competência em {skill}',
+        ]
+
+        text_lower = text.lower()
+        for context in valid_contexts:
+            if context in text_lower:
+                return True
+
+        # Se a skill aparece múltiplas vezes, é provavelmente válida
+        if text_lower.count(skill.lower()) >= 2:
+            return True
+
+        return False
 
     def _calculate_skill_confidence_advanced(self, text: str, skill: str) -> float:
         """Calcula confiança na detecção da skill"""
@@ -487,6 +695,12 @@ class AdvancedResumeParser:
         languages = []
         text_lower = text.lower()
 
+        # Padrões para extrair idiomas com níveis
+        language_patterns = [
+            r'([a-zA-ZÀ-ÿ]+)\s*[:\-\(]?\s*([a-zA-ZÀ-ÿ]+)\)?',
+            r'([a-zA-ZÀ-ÿ]+)\s*-\s*([a-zA-ZÀ-ÿ]+)',
+        ]
+
         for lang in language_map.get(language, language_map['en']):
             if lang in text_lower:
                 # Tenta detectar nível de proficiência
@@ -496,16 +710,20 @@ class AdvancedResumeParser:
                     'proficiency': proficiency
                 })
 
+        # Se não encontrou com padrões, tenta abordagem alternativa
+        if not languages:
+            languages = self._extract_languages_fallback(text, language)
+
         return languages
 
     def _detect_language_proficiency_advanced(self, text: str, language: str, doc_language: str) -> str:
         """Detecta nível de proficiência no idioma"""
         proficiency_indicators = {
             'pt': {
-                'nativo': ['nativo', 'língua materna'],
-                'fluente': ['fluente', 'avançado', 'proficiente'],
-                'intermediário': ['intermediário', 'intermedio'],
-                'básico': ['básico', 'iniciante', 'principiante']
+                'nativo': ['nativo', 'língua materna', 'materna'],
+                'fluente': ['fluente', 'avançado', 'proficiente', 'fluente'],
+                'intermediário': ['intermediário', 'intermedio', 'intermediario'],
+                'básico': ['básico', 'iniciante', 'principiante', 'basico']
             },
             'en': {
                 'native': ['native', 'mother tongue'],
@@ -524,59 +742,118 @@ class AdvancedResumeParser:
         indicators = proficiency_indicators.get(doc_language, proficiency_indicators['en'])
         text_lower = text.lower()
 
-        for level, level_indicators in indicators.items():
-            for indicator in level_indicators:
-                if indicator in text_lower and language in text_lower:
-                    return level
+        # Procura o idioma e seu nível próximo no texto
+        language_index = text_lower.find(language)
+        if language_index != -1:
+            # Procura no contexto ao redor do idioma
+            context_start = max(0, language_index - 50)
+            context_end = min(len(text_lower), language_index + len(language) + 50)
+            context = text_lower[context_start:context_end]
+
+            for level, level_indicators in indicators.items():
+                for indicator in level_indicators:
+                    if indicator in context:
+                        return level
 
         return 'not specified'
 
-    def _extract_certifications_advanced(self, text: str, language: str) -> List[str]:
+    def _extract_languages_fallback(self, text: str, language: str) -> List[Dict]:
+        """Método alternativo para extrair idiomas"""
+        languages = []
+        text_lower = text.lower()
+
+        # Lista comum de idiomas
+        common_languages = ['português', 'inglês', 'espanhol', 'francês', 'alemão', 'italiano',
+                            'portuguese', 'english', 'spanish', 'french', 'german', 'italian']
+
+        for lang in common_languages:
+            if lang in text_lower:
+                languages.append({
+                    'language': lang,
+                    'proficiency': 'not specified'
+                })
+
+        return languages
+
+    def _extract_certifications_advanced(self, text: str, language: str) -> List[Dict]:
         """Extrai certificações mencionadas"""
         certifications = []
-        cert_patterns = {
-            'pt': ['certificação', 'certificado', 'curso', 'formação', 'treinamento'],
-            'en': ['certification', 'certificate', 'course', 'training'],
-            'es': ['certificación', 'certificado', 'curso', 'formación']
-        }
-
         lines = text.split('\n')
-        in_cert_section = False
 
         for line in lines:
-            line_lower = line.lower()
-
-            if any(keyword in line_lower for keyword in cert_patterns[language]):
-                in_cert_section = True
-                continue
-
-            if in_cert_section and len(line.strip()) > 5:
-                certifications.append(line.strip())
+            line_clean = line.strip()
+            if len(line_clean) > 10 and any(keyword in line_clean.lower() for keyword in
+                                            ['certificado', 'certificação', 'certification', 'curso', 'course']):
+                certifications.append({
+                    'name': line_clean,
+                    'type': 'certification'
+                })
 
         return certifications
+
+    def _extract_projects_advanced(self, text: str, language: str) -> List[Dict]:
+        """Extrai projetos mencionados"""
+        projects = []
+        lines = text.split('\n')
+
+        for line in lines:
+            line_clean = line.strip()
+            if (len(line_clean) > 15 and
+                    any(keyword in line_clean.lower() for keyword in
+                        ['projeto', 'project', 'portfólio', 'portfolio', 'trabalho', 'work'])):
+                projects.append({
+                    'name': line_clean,
+                    'description': line_clean,
+                    'type': 'project'
+                })
+
+        return projects
+
+    def _extract_soft_skills_advanced(self, text: str, language: str) -> List[str]:
+        """Extrai habilidades pessoais"""
+        soft_skills = []
+        text_lower = text.lower()
+
+        for skill in self.skills_database['soft_skills']:
+            if skill in text_lower:
+                soft_skills.append(skill)
+
+        return list(set(soft_skills))  # Remove duplicatas
 
     def _extract_summary_advanced(self, lines: List[str], patterns: Dict, language: str) -> str:
         """Extrai resumo profissional"""
         summary_lines = []
+        in_summary_section = False
 
-        # Procura por parágrafo introdutório (geralmente no início, após informações pessoais)
-        personal_info_found = False
+        # Procura por seção de resumo
         for i, line in enumerate(lines):
-            if len(line) > 30 and not any(keyword in line.lower() for keyword in
-                                          patterns['experience_keywords'] +
-                                          patterns['education_keywords'] +
-                                          patterns['skill_keywords']):
-                if not personal_info_found:
-                    # Verifica se é informação pessoal
-                    if (re.search(patterns['email'], line) or
-                            re.search(patterns['phone'], line) or
-                            'linkedin' in line.lower()):
-                        personal_info_found = True
-                        continue
+            line_lower = line.lower()
 
-                summary_lines.append(line)
-                if len(summary_lines) >= 2:  # Limita a 2 linhas para o resumo
+            if any(keyword in line_lower for keyword in patterns['summary_keywords']):
+                in_summary_section = True
+                continue
+
+            if in_summary_section:
+                # Para quando encontrar próxima seção principal
+                if any(keyword in line_lower for keyword in
+                       patterns['experience_keywords'] + patterns['education_keywords']):
                     break
+
+                if line.strip() and len(line.strip()) > 20:  # Linhas muito curtas provavelmente não são resumo
+                    summary_lines.append(line.strip())
+
+        # Se não encontrou seção de resumo, teta pegar primeiras linhas descritivas
+        if not summary_lines:
+            for i, line in enumerate(lines[:5]):
+                if (len(line.strip()) > 30 and
+                        not any(keyword in line.lower() for keyword in
+                                patterns['experience_keywords'] + patterns['education_keywords'] +
+                                patterns['skill_keywords']) and
+                        not re.search(patterns['email'], line) and
+                        not re.search(patterns['phone'], line)):
+                    summary_lines.append(line.strip())
+                    if len(summary_lines) >= 2:
+                        break
 
         return ' '.join(summary_lines) if summary_lines else 'Resumo não identificado'
 
@@ -586,6 +863,9 @@ class AdvancedResumeParser:
         text_lower = text.lower()
 
         for area, skills in self.skills_database.items():
+            if area == 'languages':  # Ignora idiomas
+                continue
+
             score = 0
             for skill in skills:
                 if skill in text_lower:
@@ -597,41 +877,22 @@ class AdvancedResumeParser:
             if score > 0:
                 area_scores[area] = score
 
+        # Se não encontrou skills, tenta detectar por palavras-chave de área
+        if not area_scores:
+            area_keywords = {
+                'technology': ['desenvolvedor', 'developer', 'programador', 'software', 'ti', 'tecnologia'],
+                'marketing': ['marketing', 'mkt', 'publicidade', 'branding', 'seo', 'social media'],
+                'finance': ['financeiro', 'finanças', 'contábil', 'contabilidade', 'financial'],
+                'project_management': ['gerente de projetos', 'project manager', 'scrum master'],
+                'data_science': ['cientista de dados', 'data scientist', 'analista de dados'],
+            }
+
+            for area, keywords in area_keywords.items():
+                for keyword in keywords:
+                    if keyword in text_lower:
+                        area_scores[area] = area_scores.get(area, 0) + 1
+
         return max(area_scores.items(), key=lambda x: x[1])[0] if area_scores else 'general'
-
-    def _parse_education_line_advanced(self, line: str, language: str) -> Dict:
-        """Analisa linha de educação extraindo datas e descrição"""
-        # Padrões de data
-        date_pattern = r'(\d{4}\s*[-–]\s*\d{4}|\d{4}\s*[-–]\s*(?:presente|atual)|\w+\s+de\s+\d{4}\s*[-–]\s*\w+\s+de\s+\d{4})'
-        date_match = re.search(date_pattern, line)
-
-        date = date_match.group(0) if date_match else ''
-        description = re.sub(date_pattern, '', line).strip()
-
-        if description:
-            return {
-                'date': date,
-                'description': description,
-                'type': 'education'
-            }
-        return None
-
-    def _parse_experience_line_advanced(self, line: str, language: str) -> Dict:
-        """Analisa linha de experiência extraindo datas e descrição"""
-        # Padrões de data mais flexíveis
-        date_pattern = r'(\d{4}\s*[-–]\s*\d{4}|\d{4}\s*[-–]\s*(?:presente|atual)|\w+\s+de\s+\d{4}\s*[-–]\s*\w+\s+de\s+\d{4}|\d{1,2}/\d{4})'
-        date_match = re.search(date_pattern, line)
-
-        date = date_match.group(0) if date_match else ''
-        description = re.sub(date_pattern, '', line).strip()
-
-        if description:
-            return {
-                'date': date,
-                'description': description,
-                'type': 'experience'
-            }
-        return None
 
     def _get_fallback_resume_data(self) -> Dict[str, Any]:
         """Dados fallback quando extração falha"""
@@ -642,6 +903,8 @@ class AdvancedResumeParser:
             'skills': [],
             'languages': [],
             'certifications': [],
+            'projects': [],
+            'soft_skills': [],
             'summary': 'Resumo não identificado',
             'raw_text': '',
             'detected_language': 'pt',
