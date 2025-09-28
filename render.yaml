@@ -3,6 +3,7 @@ services:
     name: curriculos-ia
     env: python
     plan: free
+    pythonVersion: "3.11"          # Define a versão do Python
     buildCommand: "./build.sh"
     startCommand: "gunicorn curriculos_ia.wsgi:application"
     envVars:
@@ -12,4 +13,3 @@ services:
         generateValue: true
       - key: WEB_CONCURRENCY
         value: "4"
-        envVars:
