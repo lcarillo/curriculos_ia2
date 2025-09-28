@@ -234,42 +234,79 @@ class AdvancedResumeParser:
         return info
 
     def _extract_personal_info_advanced(self, lines: List[str], patterns: Dict, language: str) -> Dict[str, str]:
-        """Extrai informações pessoais com técnicas avançadas"""
+        """Extrai informações pessoais com técnicas avançadas - CORRIGIDA"""
         personal_info = {}
 
-        # Procura nome (geralmente nas primeiras linhas)
-        for i, line in enumerate(lines[:10]):
-            if re.match(patterns['name'], line) and len(line.split()) >= 2:
-                personal_info['name'] = line
-                break
+        # Procura primeiro por padrões específicos de contato
+        full_text = ' '.join(lines)
 
         # Extrai email
-        email_match = re.search(patterns['email'], ' '.join(lines))
+        email_match = re.search(patterns['email'], full_text)
         if email_match:
             personal_info['email'] = email_match.group(0)
 
         # Extrai telefone
-        phone_match = re.search(patterns['phone'], ' '.join(lines))
+        phone_match = re.search(patterns['phone'], full_text)
         if phone_match:
             personal_info['phone'] = phone_match.group(0)
 
-        # Extrai localização (heurística avançada)
-        location_indicators = {
-            'pt': ['rua', 'avenida', 'av.', 'cidade', 'estado', 'CEP', 'São Paulo', 'Rio de Janeiro', 'SP', 'RJ'],
-            'en': ['street', 'avenue', 'ave.', 'city', 'state', 'zip', 'New York', 'London'],
-            'es': ['calle', 'avenida', 'av.', 'ciudad', 'estado', 'CP', 'Madrid', 'Barcelona']
-        }
-
-        for line in lines:
-            if any(indicator in line.lower() for indicator in location_indicators[language]):
-                personal_info['location'] = line
-                break
-
-        # LinkedIn
+        # Procura LinkedIn
         linkedin_pattern = r'linkedin\.com/in/[a-zA-Z0-9\-]+'
-        linkedin_match = re.search(linkedin_pattern, ' '.join(lines))
+        linkedin_match = re.search(linkedin_pattern, full_text)
         if linkedin_match:
             personal_info['linkedin'] = 'https://' + linkedin_match.group(0)
+
+        # Procura nome (geralmente nas primeiras linhas, após remover contatos)
+        for i, line in enumerate(lines[:10]):
+            # Remove informações de contato já encontradas
+            clean_line = line
+            if 'email' in personal_info:
+                clean_line = clean_line.replace(personal_info['email'], '')
+            if 'phone' in personal_info:
+                clean_line = clean_line.replace(personal_info['phone'], '')
+
+            # Verifica se é um nome válido
+            if (re.match(patterns['name'], clean_line.strip()) and
+                    len(clean_line.strip().split()) >= 2 and
+                    len(clean_line.strip()) > 5):
+                personal_info['name'] = clean_line.strip()
+                break
+
+        # Extrai localização (linhas iniciais que não são nome, email, telefone)
+        location_candidates = []
+        for i, line in enumerate(lines[:6]):
+            clean_line = line.strip()
+            # Remove informações já identificadas
+            if 'name' in personal_info and personal_info['name'] in clean_line:
+                clean_line = clean_line.replace(personal_info['name'], '')
+            if 'email' in personal_info and personal_info['email'] in clean_line:
+                clean_line = clean_line.replace(personal_info['email'], '')
+            if 'phone' in personal_info and personal_info['phone'] in clean_line:
+                clean_line = clean_line.replace(personal_info['phone'], '')
+
+            # Verifica se pode ser uma localização
+            if (clean_line and
+                    len(clean_line) > 3 and
+                    len(clean_line) < 100 and
+                    not re.match(patterns['email'], clean_line) and
+                    not re.match(patterns['phone'], clean_line) and
+                    ('name' not in personal_info or personal_info['name'] not in line)):
+                location_candidates.append(clean_line)
+
+        # Pega a primeira linha candidata como localização
+        if location_candidates:
+            personal_info['location'] = location_candidates[0]
+
+        # Se não encontrou nome, tenta encontrar no texto completo
+        if 'name' not in personal_info:
+            # Procura por padrões de nome em todo o texto
+            words = full_text.split()
+            for i in range(len(words) - 1):
+                potential_name = f"{words[i]} {words[i + 1]}"
+                if (re.match(patterns['name'], potential_name) and
+                        len(potential_name.split()) >= 2):
+                    personal_info['name'] = potential_name
+                    break
 
         return personal_info
 
@@ -277,7 +314,9 @@ class AdvancedResumeParser:
         """Extrai seção de educação com maior precisão"""
         education = []
         in_education_section = False
+        education_lines = []
 
+        # Encontra a seção de educação
         for i, line in enumerate(lines):
             line_lower = line.lower()
 
@@ -287,15 +326,37 @@ class AdvancedResumeParser:
                 continue
 
             if in_education_section:
-                # Para quando encontrar próxima seção
+                # Para quando encontrar próxima seção principal
                 if any(keyword in line_lower for keyword in
-                       patterns['experience_keywords'] + patterns['skill_keywords']):
+                       patterns['experience_keywords'] + patterns['skill_keywords'] + ['certificações',
+                                                                                       'certifications', 'idiomas',
+                                                                                       'languages']):
                     break
 
-                # Extrai informações educacionais com datas
-                edu_item = self._parse_education_line_advanced(line, language)
-                if edu_item:
-                    education.append(edu_item)
+                if line.strip():
+                    education_lines.append(line)
+
+        # Processa as linhas de educação
+        current_item = None
+        for line in education_lines:
+            # Verifica se é um novo item de educação (contém datas)
+            date_pattern = r'\b(\d{4})\s*[-–]\s*(\d{4}|presente|atual)\b|\b(\w+\s+\d{4})\s*[-–]\s*(\w+\s+\d{4}|presente|atual)\b'
+            date_match = re.search(date_pattern, line, re.IGNORECASE)
+
+            if date_match:
+                if current_item:
+                    education.append(current_item)
+                current_item = {
+                    'date': date_match.group(0),
+                    'description': re.sub(date_pattern, '', line).strip(),
+                    'type': 'education'
+                }
+            elif current_item:
+                # Continua a descrição do item atual
+                current_item['description'] += ' ' + line.strip()
+
+        if current_item:
+            education.append(current_item)
 
         return education if education else [{'description': 'Educação não identificada', 'type': 'unknown'}]
 
@@ -303,7 +364,9 @@ class AdvancedResumeParser:
         """Extrai seção de experiência profissional com maior precisão"""
         experience = []
         in_experience_section = False
+        experience_lines = []
 
+        # Encontra a seção de experiência
         for i, line in enumerate(lines):
             line_lower = line.lower()
 
@@ -313,14 +376,36 @@ class AdvancedResumeParser:
                 continue
 
             if in_experience_section:
-                # Para quando encontrar seção de habilidades
-                if any(keyword in line_lower for keyword in patterns['skill_keywords'] + self.education_keywords):
+                # Para quando encontrar próxima seção principal
+                if any(keyword in line_lower for keyword in
+                       patterns['education_keywords'] + patterns['skill_keywords'] + ['habilidades', 'skills',
+                                                                                      'formação', 'education']):
                     break
 
-                # Extrai informações de experiência com datas
-                exp_item = self._parse_experience_line_advanced(line, language)
-                if exp_item:
-                    experience.append(exp_item)
+                if line.strip():
+                    experience_lines.append(line)
+
+        # Processa as linhas de experiência
+        current_item = None
+        for line in experience_lines:
+            # Verifica se é um novo item de experiência (contém datas)
+            date_pattern = r'\b(\d{4})\s*[-–]\s*(\d{4}|presente|atual)\b|\b(\w+\s+\d{4})\s*[-–]\s*(\w+\s+\d{4}|presente|atual)\b'
+            date_match = re.search(date_pattern, line, re.IGNORECASE)
+
+            if date_match:
+                if current_item:
+                    experience.append(current_item)
+                current_item = {
+                    'date': date_match.group(0),
+                    'description': re.sub(date_pattern, '', line).strip(),
+                    'type': 'experience'
+                }
+            elif current_item:
+                # Continua a descrição do item atual
+                current_item['description'] += ' ' + line.strip()
+
+        if current_item:
+            experience.append(current_item)
 
         return experience if experience else [{'description': 'Experiência não identificada', 'type': 'unknown'}]
 
@@ -474,13 +559,24 @@ class AdvancedResumeParser:
         """Extrai resumo profissional"""
         summary_lines = []
 
-        # Procura por parágrafo introdutório (geralmente no início)
-        for i, line in enumerate(lines[:5]):
-            if len(line) > 50 and not any(keyword in line.lower() for keyword in
+        # Procura por parágrafo introdutório (geralmente no início, após informações pessoais)
+        personal_info_found = False
+        for i, line in enumerate(lines):
+            if len(line) > 30 and not any(keyword in line.lower() for keyword in
                                           patterns['experience_keywords'] +
                                           patterns['education_keywords'] +
                                           patterns['skill_keywords']):
+                if not personal_info_found:
+                    # Verifica se é informação pessoal
+                    if (re.search(patterns['email'], line) or
+                            re.search(patterns['phone'], line) or
+                            'linkedin' in line.lower()):
+                        personal_info_found = True
+                        continue
+
                 summary_lines.append(line)
+                if len(summary_lines) >= 2:  # Limita a 2 linhas para o resumo
+                    break
 
         return ' '.join(summary_lines) if summary_lines else 'Resumo não identificado'
 

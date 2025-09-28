@@ -1,11 +1,40 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}Editar Currículo - Currículos IA{% endblock %}
 
+{% block extra_css %}
+<style>
+    .date-input-wrapper {
+        position: relative;
+    }
+    .date-input-wrapper input[type="month"] {
+        padding-right: 1rem; /* Removido espaço para o emoji */
+    }
+    /* REMOVIDO: .date-input-wrapper::after (emoji de calendário) */
+    .section-card {
+        transition: all 0.3s ease;
+    }
+    .section-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    @media (max-width: 768px) {
+        .mobile-stack {
+            display: flex;
+            flex-direction: column;
+        }
+        .mobile-stack > * {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-12">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header Section -->
         <div class="text-center mb-8">
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -14,11 +43,11 @@
             <p class="text-gray-600 dark:text-gray-300">Modifique as informações extraídas e salve as alterações</p>
         </div>
 
-        <form method="POST" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-100 dark:border-gray-700">
+        <form method="POST" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 md:p-8 border border-gray-100 dark:border-gray-700">
             {% csrf_token %}
 
             <!-- Informações Pessoais -->
-            <div class="mb-8">
+            <div class="mb-8 section-card">
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                     <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
@@ -27,126 +56,377 @@
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
-                        <input type="text" name="name" value="{{ personal_info.name|default:'' }}"
-                               class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome Completo *</label>
+                        <input type="text" name="name" value="{{ personal_info.name|default:'' }}" required
+                               class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                        <input type="email" name="email" value="{{ personal_info.email|default:'' }}"
-                               class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email *</label>
+                        <input type="email" name="email" value="{{ personal_info.email|default:'' }}" required
+                               class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefone</label>
-                        <input type="text" name="phone" value="{{ personal_info.phone|default:'' }}"
-                               class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefone *</label>
+                        <input type="tel" name="phone" value="{{ personal_info.phone|default:'' }}" required
+                               class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="(11) 99999-9999" id="phone">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Localização</label>
                         <input type="text" name="location" value="{{ personal_info.location|default:'' }}"
-                               class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                               class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">LinkedIn</label>
+                        <input type="url" name="linkedin" value="{{ personal_info.linkedin|default:'' }}"
+                               class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="https://linkedin.com/in/seu-perfil">
                     </div>
                 </div>
             </div>
 
-            <!-- Experiência Profissional -->
-            <div class="mb-8">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                    </svg>
-                    Experiência Profissional
-                </h2>
-                <div id="experience-container">
-                    {% for exp in experience %}
-                    <div class="experience-item mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                        <input type="hidden" name="experience_count" value="{{ experience|length }}">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data/Período</label>
-                                <input type="text" name="experience_{{ forloop.counter0 }}_date"
-                                       value="{{ exp.date|default:'' }}" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição</label>
-                                <textarea name="experience_{{ forloop.counter0 }}_description"
-                                          class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" rows="3">{{ exp.description|default:'' }}</textarea>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Educação -->
-            <div class="mb-8">
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 14l9-5-9-5-9 5 9 5z"></path>
-                        <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path>
-                    </svg>
-                    Formação Acadêmica
-                </h2>
-                <div id="education-container">
-                    {% for edu in education %}
-                    <div class="education-item mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                        <input type="hidden" name="education_count" value="{{ education|length }}">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data/Período</label>
-                                <input type="text" name="education_{{ forloop.counter0 }}_date"
-                                       value="{{ edu.date|default:'' }}" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição</label>
-                                <textarea name="education_{{ forloop.counter0 }}_description"
-                                          class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" rows="3">{{ edu.description|default:'' }}</textarea>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <!-- Habilidades -->
-            <div class="mb-8">
+            <!-- Seção de Habilidades por Área -->
+            <div class="mb-8 section-card">
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                     <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                     </svg>
-                    Habilidades
+                    Habilidades por Área
                 </h2>
-                <textarea name="skills" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" rows="4"
-                          placeholder="Separe as habilidades por vírgula">{% for area, area_skills in skills.items %}{% for skill in area_skills %}{{ skill.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if not forloop.last %}, {% endif %}{% endfor %}</textarea>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for area, area_skills in skills.items %}
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 dark:text-white mb-3 capitalize">{{ area|title }}</h4>
+                        <textarea name="skills_{{ area }}"
+                                  class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  rows="3"
+                                  placeholder="Liste as habilidades separadas por vírgula">{% for skill in area_skills %}{{ skill.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</textarea>
+                    </div>
+                    {% endfor %}
+                </div>
+                <!-- Habilidades em outras áreas -->
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Outras Habilidades</label>
+                    <textarea name="skills_other"
+                              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              rows="3"
+                              placeholder="Habilidades que não se enquadram nas áreas acima"></textarea>
+                </div>
             </div>
 
-            <!-- Idiomas -->
-            <div class="mb-8">
+            <!-- Habilidades Pessoais -->
+            <div class="mb-8 section-card">
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                     <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
-                    Idiomas
+                    Habilidades Pessoais
                 </h2>
-                <textarea name="languages" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" rows="2"
-                          placeholder="Separe os idiomas por vírgula">{% for lang in languages %}{{ lang.language }}{% if not forloop.last %}, {% endif %}{% endfor %}</textarea>
+                <div>
+                    <textarea name="soft_skills"
+                              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              rows="3"
+                              placeholder="Liste suas habilidades pessoais separadas por vírgula">{% for skill in soft_skills %}{{ skill }}{% if not forloop.last %}, {% endif %}{% endfor %}</textarea>
+                </div>
             </div>
 
-            <!-- Resumo -->
-            <div class="mb-8">
+            <!-- Resumo Profissional -->
+            <div class="mb-8 section-card">
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                     <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
                     </svg>
                     Resumo Profissional
                 </h2>
-                <textarea name="summary" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" rows="4">{{ summary|default:'' }}</textarea>
+                <div>
+                    <textarea name="summary"
+                              class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              rows="4"
+                              placeholder="Descreva seu resumo profissional">{{ summary|default:'' }}</textarea>
+                </div>
+            </div>
+
+            <!-- Experiência Profissional -->
+            <div class="mb-8 section-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                        Experiência Profissional
+                    </h2>
+                    <button type="button" onclick="addExperience()" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Adicionar
+                    </button>
+                </div>
+                <div id="experience-container">
+                    {% for exp in experience %}
+                    <div class="experience-item mb-6 p-4 border border-gray-200 dark:border-gray-600 rounded-lg relative bg-gray-50 dark:bg-gray-700/50">
+                        <button type="button" onclick="removeExperience(this)" class="absolute top-3 right-3 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cargo *</label>
+                                <input type="text" name="experience_{{ forloop.counter0 }}_position"
+                                       value="{{ exp.position|default:'' }}" required
+                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Ex: Desenvolvedor Full Stack">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Empresa *</label>
+                                <input type="text" name="experience_{{ forloop.counter0 }}_company" value="{{ exp.company|default:'' }}" required
+                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Ex: Google Brasil">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 mobile-stack">
+                            <div class="date-input-wrapper">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Início *</label>
+                                <input type="month" name="experience_{{ forloop.counter0 }}_start_date"
+                                       value="{{ exp.start_date|default:'' }}" required
+                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div id="experience_{{ forloop.counter0 }}_end_date_container" class="date-input-wrapper">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Término</label>
+                                <input type="month" name="experience_{{ forloop.counter0 }}_end_date" value="{{ exp.end_date|default:'' }}"
+                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div class="flex items-end">
+                                <label class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                                    <input type="checkbox" name="experience_{{ forloop.counter0 }}_current"
+                                           {% if exp.current %}checked{% endif %}
+                                           onchange="toggleEndDate(this, 'experience_{{ forloop.counter0 }}_end_date_container')"
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700">
+                                    <span class="ml-2">Emprego Atual</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição das Atividades *</label>
+                            <textarea name="experience_{{ forloop.counter0 }}_description" required
+                                      class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="3"
+                                      placeholder="Descreva suas principais responsabilidades e conquistas">{{ exp.description|default:'' }}</textarea>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-gray-500 dark:text-gray-400">
+                        Nenhuma experiência adicionada
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Formação Acadêmica -->
+            <div class="mb-8 section-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                            <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"></path>
+                        </svg>
+                        Formação Acadêmica
+                    </h2>
+                    <button type="button" onclick="addEducation()" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Adicionar
+                    </button>
+                </div>
+                <div id="education-container">
+                    {% for edu in education %}
+                    <div class="education-item mb-6 p-4 border border-gray-200 dark:border-gray-600 rounded-lg relative bg-gray-50 dark:bg-gray-700/50">
+                        <button type="button" onclick="removeEducation(this)" class="absolute top-3 right-3 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Curso *</label>
+                                <input type="text" name="education_{{ forloop.counter0 }}_course"
+                                       value="{{ edu.course|default:'' }}" required
+                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Ex: Bacharelado em Ciência da Computação">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instituição *</label>
+                                <input type="text" name="education_{{ forloop.counter0 }}_institution" value="{{ edu.institution|default:'' }}" required
+                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Ex: Universidade de São Paulo">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 mobile-stack">
+                            <div class="date-input-wrapper">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Início *</label>
+                                <input type="month" name="education_{{ forloop.counter0 }}_start_date"
+                                       value="{{ edu.start_date|default:'' }}" required
+                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div id="education_{{ forloop.counter0 }}_end_date_container" class="date-input-wrapper">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Conclusão</label>
+                                <input type="month" name="education_{{ forloop.counter0 }}_end_date" value="{{ edu.end_date|default:'' }}"
+                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div class="flex items-end">
+                                <label class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                                    <input type="checkbox" name="education_{{ forloop.counter0 }}_current"
+                                           {% if edu.current %}checked{% endif %}
+                                           onchange="toggleEndDate(this, 'education_{{ forloop.counter0 }}_end_date_container')"
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700">
+                                    <span class="ml-2">Cursando Atualmente</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição</label>
+                            <textarea name="education_{{ forloop.counter0 }}_description"
+                                      class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="2"
+                                      placeholder="Informações adicionais sobre o curso">{{ edu.description|default:'' }}</textarea>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-gray-500 dark:text-gray-400">
+                        Nenhuma formação acadêmica adicionada
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Cursos e Certificações -->
+            <div class="mb-8 section-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                        Cursos e Certificações
+                    </h2>
+                    <button type="button" onclick="addCertification()" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Adicionar
+                    </button>
+                </div>
+                <div id="certification-container">
+                    {% for cert in certifications %}
+                    <div class="certification-item mb-6 p-4 border border-gray-200 dark:border-gray-600 rounded-lg relative bg-gray-50 dark:bg-gray-700/50">
+                        <button type="button" onclick="removeCertification(this)" class="absolute top-3 right-3 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Certificação *</label>
+                                <input type="text" name="certification_{{ forloop.counter0 }}_name"
+                                       value="{{ cert.name|default:'' }}" required
+                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Ex: AWS Certified Solutions Architect">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instituição *</label>
+                                <input type="text" name="certification_{{ forloop.counter0 }}_institution" value="{{ cert.institution|default:'' }}" required
+                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Ex: Amazon Web Services">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 mobile-stack">
+                            <div class="date-input-wrapper">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Conclusão</label>
+                                <input type="month" name="certification_{{ forloop.counter0 }}_date" value="{{ cert.date|default:'' }}"
+                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL da Certificação</label>
+                                <input type="url" name="certification_{{ forloop.counter0 }}_url" value="{{ cert.url|default:'' }}"
+                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Ex: https://www.credly.com/badges/...">
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-gray-500 dark:text-gray-400">
+                        Nenhuma certificação adicionada
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Idiomas -->
+            <div class="mb-8 section-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                        </svg>
+                        Idiomas
+                    </h2>
+                    <button type="button" onclick="addLanguage()" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Adicionar
+                    </button>
+                </div>
+                <div id="language-container">
+                    {% for lang in languages %}
+                    <div class="language-item mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg relative bg-gray-50 dark:bg-gray-700/50">
+                        <button type="button" onclick="removeLanguage(this)" class="absolute top-3 right-3 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Idioma *</label>
+                                <input type="text" name="language_{{ forloop.counter0 }}_name"
+                                       value="{{ lang.language|default:'' }}" required
+                                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="Ex: Inglês">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nível de Proficiência *</label>
+                                <select name="language_{{ forloop.counter0 }}_proficiency" required
+                                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">Selecione o nível</option>
+                                    <option value="básico" {% if lang.proficiency == 'básico' %}selected{% endif %}>Básico</option>
+                                    <option value="intermediário" {% if lang.proficiency == 'intermediário' or lang.proficiency == 'intermediate' %}selected{% endif %}>Intermediário</option>
+                                    <option value="avançado" {% if lang.proficiency == 'avançado' or lang.proficiency == 'advanced' %}selected{% endif %}>Avançado</option>
+                                    <option value="fluente" {% if lang.proficiency == 'fluente' or lang.proficiency == 'fluent' %}selected{% endif %}>Fluente</option>
+                                    <option value="nativo" {% if lang.proficiency == 'nativo' or lang.proficiency == 'native' %}selected{% endif %}>Nativo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4 text-gray-500 dark:text-gray-400">
+                        Nenhum idioma adicionado
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
 
             <!-- Botões -->
-            <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-600">
-                <a href="{% url 'resume_detail' resume.id %}" class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200 dark:border-gray-600">
+                <a href="{% url 'resume_detail' resume.id %}" class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-center">
                     Cancelar
                 </a>
                 <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors">
@@ -156,4 +436,356 @@
         </form>
     </div>
 </div>
+
+<script>
+// Contadores para cada seção
+let experienceCount = {{ experience|length }};
+let educationCount = {{ education|length }};
+let certificationCount = {{ certifications|length }};
+let languageCount = {{ languages|length }};
+
+// Função para alternar visibilidade do campo de data de término
+function toggleEndDate(checkbox, containerId) {
+    const endDateContainer = document.getElementById(containerId);
+    if (checkbox.checked) {
+        endDateContainer.style.display = 'none';
+        const endDateInput = endDateContainer.querySelector('input[type="month"]');
+        if (endDateInput) {
+            endDateInput.value = '';
+            endDateInput.removeAttribute('required');
+        }
+    } else {
+        endDateContainer.style.display = 'block';
+        const endDateInput = endDateContainer.querySelector('input[type="month"]');
+        if (endDateInput) {
+            endDateInput.setAttribute('required', 'required');
+        }
+    }
+}
+
+// Inicializar estados dos checkboxes
+document.addEventListener('DOMContentLoaded', function() {
+    // Experiências
+    document.querySelectorAll('input[name^="experience_"][name$="_current"]').forEach(checkbox => {
+        const index = checkbox.name.match(/experience_(\d+)_current/)[1];
+        toggleEndDate(checkbox, `experience_${index}_end_date_container`);
+    });
+
+    // Educação
+    document.querySelectorAll('input[name^="education_"][name$="_current"]').forEach(checkbox => {
+        const index = checkbox.name.match(/education_(\d+)_current/)[1];
+        toggleEndDate(checkbox, `education_${index}_end_date_container`);
+    });
+
+    // Melhorar a experiência em dispositivos móveis para campos de data
+    const dateInputs = document.querySelectorAll('input[type="month"]');
+    dateInputs.forEach(input => {
+        // Adicionar placeholder para mobile
+        if (!input.value) {
+            input.setAttribute('placeholder', 'AAAA-MM');
+        }
+
+        // Melhorar foco em mobile
+        input.addEventListener('focus', function() {
+            this.type = 'month';
+        });
+    });
+
+    // MÁSCARA DE TELEFONE BRASILEIRO
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+
+            // Aplica a máscara
+            if (value.length <= 10) {
+                // Formato: (11) 9999-9999
+                value = value.replace(/^(\d{2})(\d{0,4})(\d{0,4})/, '($1) $2-$3');
+            } else {
+                // Formato: (11) 99999-9999
+                value = value.replace(/^(\d{2})(\d{0,5})(\d{0,4})/, '($1) $2-$3');
+            }
+
+            // Remove os últimos caracteres se estiverem incompletos
+            value = value.replace(/-$/, '').replace(/\) $/, '');
+
+            e.target.value = value;
+        });
+
+        // Validação do formato ao perder o foco
+        phoneInput.addEventListener('blur', function(e) {
+            const value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 10 && value.length <= 11) {
+                e.target.classList.remove('border-red-500');
+                e.target.classList.add('border-green-500');
+            } else {
+                e.target.classList.remove('border-green-500');
+                e.target.classList.add('border-red-500');
+            }
+        });
+    }
+});
+
+// Funções para adicionar/remover itens (mantidas do código original)
+function addExperience() {
+    const container = document.getElementById('experience-container');
+    const newItem = document.createElement('div');
+    newItem.className = 'experience-item mb-6 p-4 border border-gray-200 dark:border-gray-600 rounded-lg relative bg-gray-50 dark:bg-gray-700/50';
+    newItem.innerHTML = `
+        <button type="button" onclick="removeExperience(this)" class="absolute top-3 right-3 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+        </button>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cargo *</label>
+                <input type="text" name="experience_${experienceCount}_position" required
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Ex: Desenvolvedor Full Stack">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Empresa *</label>
+                <input type="text" name="experience_${experienceCount}_company" required
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Ex: Google Brasil">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 mobile-stack">
+            <div class="date-input-wrapper">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Início *</label>
+                <input type="month" name="experience_${experienceCount}_start_date" required
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div id="experience_${experienceCount}_end_date_container" class="date-input-wrapper">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Término</label>
+                <input type="month" name="experience_${experienceCount}_end_date"
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div class="flex items-end">
+                <label class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                    <input type="checkbox" name="experience_${experienceCount}_current"
+                           onchange="toggleEndDate(this, 'experience_${experienceCount}_end_date_container')"
+                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700">
+                    <span class="ml-2">Emprego Atual</span>
+                </label>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição das Atividades *</label>
+            <textarea name="experience_${experienceCount}_description" required
+                      class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="3"
+                      placeholder="Descreva suas principais responsabilidades e conquistas"></textarea>
+        </div>
+    `;
+    container.appendChild(newItem);
+    experienceCount++;
+
+    // Remover mensagem de "nenhum item" se existir
+    const emptyMessage = container.querySelector('.text-center');
+    if (emptyMessage) {
+        emptyMessage.remove();
+    }
+}
+
+function removeExperience(button) {
+    const item = button.closest('.experience-item');
+    item.remove();
+}
+
+function addEducation() {
+    const container = document.getElementById('education-container');
+    const newItem = document.createElement('div');
+    newItem.className = 'education-item mb-6 p-4 border border-gray-200 dark:border-gray-600 rounded-lg relative bg-gray-50 dark:bg-gray-700/50';
+    newItem.innerHTML = `
+        <button type="button" onclick="removeEducation(this)" class="absolute top-3 right-3 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+        </button>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Curso *</label>
+                <input type="text" name="education_${educationCount}_course" required
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Ex: Bacharelado em Ciência da Computação">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instituição *</label>
+                <input type="text" name="education_${educationCount}_institution" required
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Ex: Universidade de São Paulo">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 mobile-stack">
+            <div class="date-input-wrapper">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Início *</label>
+                <input type="month" name="education_${educationCount}_start_date" required
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div id="education_${educationCount}_end_date_container" class="date-input-wrapper">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Conclusão</label>
+                <input type="month" name="education_${educationCount}_end_date"
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div class="flex items-end">
+                <label class="flex items-center text-sm text-gray-700 dark:text-gray-300">
+                    <input type="checkbox" name="education_${educationCount}_current"
+                           onchange="toggleEndDate(this, 'education_${educationCount}_end_date_container')"
+                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700">
+                    <span class="ml-2">Cursando Atualmente</span>
+                </label>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição</label>
+            <textarea name="education_${educationCount}_description"
+                      class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="2"
+                      placeholder="Informações adicionais sobre o curso"></textarea>
+        </div>
+    `;
+    container.appendChild(newItem);
+    educationCount++;
+
+    // Remover mensagem de "nenhum item" se existir
+    const emptyMessage = container.querySelector('.text-center');
+    if (emptyMessage) {
+        emptyMessage.remove();
+    }
+}
+
+function removeEducation(button) {
+    const item = button.closest('.education-item');
+    item.remove();
+}
+
+function addCertification() {
+    const container = document.getElementById('certification-container');
+    const newItem = document.createElement('div');
+    newItem.className = 'certification-item mb-6 p-4 border border-gray-200 dark:border-gray-600 rounded-lg relative bg-gray-50 dark:bg-gray-700/50';
+    newItem.innerHTML = `
+        <button type="button" onclick="removeCertification(this)" class="absolute top-3 right-3 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+        </button>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Certificação *</label>
+                <input type="text" name="certification_${certificationCount}_name" required
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Ex: AWS Certified Solutions Architect">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instituição *</label>
+                <input type="text" name="certification_${certificationCount}_institution" required
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Ex: Amazon Web Services">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 mobile-stack">
+            <div class="date-input-wrapper">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data de Conclusão</label>
+                <input type="month" name="certification_${certificationCount}_date"
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL da Certificação</label>
+                <input type="url" name="certification_${certificationCount}_url"
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Ex: https://www.credly.com/badges/...">
+            </div>
+        </div>
+    `;
+    container.appendChild(newItem);
+    certificationCount++;
+
+    // Remover mensagem de "nenhum item" se existir
+    const emptyMessage = container.querySelector('.text-center');
+    if (emptyMessage) {
+        emptyMessage.remove();
+    }
+}
+
+function removeCertification(button) {
+    const item = button.closest('.certification-item');
+    item.remove();
+}
+
+function addLanguage() {
+    const container = document.getElementById('language-container');
+    const newItem = document.createElement('div');
+    newItem.className = 'language-item mb-4 p-4 border border-gray-200 dark:border-gray-600 rounded-lg relative bg-gray-50 dark:bg-gray-700/50';
+    newItem.innerHTML = `
+        <button type="button" onclick="removeLanguage(this)" class="absolute top-3 right-3 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+        </button>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Idioma *</label>
+                <input type="text" name="language_${languageCount}_name" required
+                       class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Ex: Inglês">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nível de Proficiência *</label>
+                <select name="language_${languageCount}_proficiency" required
+                        class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">Selecione o nível</option>
+                    <option value="básico">Básico</option>
+                    <option value="intermediário">Intermediário</option>
+                    <option value="avançado">Avançado</option>
+                    <option value="fluente">Fluente</option>
+                    <option value="nativo">Nativo</option>
+                </select>
+            </div>
+        </div>
+    `;
+    container.appendChild(newItem);
+    languageCount++;
+
+    // Remover mensagem de "nenhum item" se existir
+    const emptyMessage = container.querySelector('.text-center');
+    if (emptyMessage) {
+        emptyMessage.remove();
+    }
+}
+
+function removeLanguage(button) {
+    const item = button.closest('.language-item');
+    item.remove();
+}
+
+// Validação antes do envio
+document.querySelector('form').addEventListener('submit', function(e) {
+    let isValid = true;
+
+    // Validar campos obrigatórios
+    const requiredFields = this.querySelectorAll('[required]');
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            isValid = false;
+            field.classList.add('border-red-500');
+        } else {
+            field.classList.remove('border-red-500');
+        }
+    });
+
+    if (!isValid) {
+        e.preventDefault();
+        alert('Por favor, preencha todos os campos obrigatórios.');
+    }
+});
+</script>
 {% endblock %}
