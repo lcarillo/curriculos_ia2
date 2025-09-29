@@ -28,3 +28,5 @@ RUN python manage.py collectstatic --noinput
 
 # 7️⃣ Comando para iniciar a aplicação
 CMD ["gunicorn", "curriculos_ia.wsgi:application", "--bind", "0.0.0.0:10000"]
+
+
