@@ -1,11 +1,10 @@
 services:
   - type: web
     name: curriculos-ia
-    env: python
+    env: docker
     plan: free
-    pythonVersion: "3.11"          # Define a versão do Python
-    buildCommand: "./build.sh"
-    startCommand: "gunicorn curriculos_ia.wsgi:application"
+    dockerfilePath: ./Dockerfile
+    startCommand: "gunicorn curriculos_ia.wsgi:application --bind 0.0.0.0:10000"
     envVars:
       - key: DEBUG
         value: "False"

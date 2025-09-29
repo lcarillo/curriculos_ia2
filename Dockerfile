@@ -1,19 +1,30 @@
+# 1️⃣ Base Python 3.11 slim
 FROM python:3.11-slim
 
+# 2️⃣ Diretório de trabalho
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y     gcc     libpq-dev     python3-dev     && rm -rf /var/lib/apt/lists/*
+# 3️⃣ Instalar dependências do sistema necessárias para blis, psycopg2 e outras
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    libpq-dev \
+    python3-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# 4️⃣ Copiar requirements e instalar Python dependencies
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project
+# 5️⃣ Copiar todo o código do projeto
 COPY . .
 
-# Collect static files
+# 6️⃣ Rodar migrações e coletar arquivos estáticos
+RUN python manage.py migrate --no-input
 RUN python manage.py collectstatic --noinput
 
-# Run application
-CMD ["gunicorn", "curriculos_ia.wsgi:application", "--bind", "0.0.0.0:8000"]
+# 7️⃣ Comando para iniciar a aplicação
+CMD ["gunicorn", "curriculos_ia.wsgi:application", "--bind", "0.0.0.0:10000"]
